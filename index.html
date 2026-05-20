@@ -286,6 +286,85 @@
   /* PIN change section */
   .pin-section { background: var(--bg); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); margin-top: 16px; }
   .pin-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+
+  /* ── TAREFAS ── */
+  .tasks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+  .task-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .task-card-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .task-avatar {
+    width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:14px; flex-shrink:0; color:#fff;
+  }
+  .av-blue   { background:#3B82F6; }
+  .av-green  { background:#10B981; }
+  .av-amber  { background:#F59E0B; }
+  .av-coral  { background:#EF4444; }
+  .av-purple { background:#8B5CF6; }
+  .task-person-name { font-weight:600; font-size:14px; }
+  .task-list { list-style:none; margin:0; padding:0; }
+  .task-item { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); }
+  .task-item:last-child { border-bottom:none; }
+  .task-cb { margin-top:3px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+  .task-text { font-size:13px; color:var(--text2); flex:1; line-height:1.4; }
+  .task-text.done { text-decoration:line-through; color:var(--text3); }
+  .task-del { background:none; border:none; cursor:pointer; color:var(--text3); font-size:13px; padding:0 2px; }
+  .task-del:hover { color:var(--danger,#ef4444); }
+  .task-add-row { display:flex; gap:6px; margin-top:10px; }
+  .task-add-row input {
+    flex:1; padding:6px 10px; background:var(--bg);
+    border:1px solid var(--border); border-radius:var(--radius-sm);
+    font-family:inherit; font-size:13px; color:var(--text); outline:none;
+  }
+  .task-add-row input:focus { border-color:var(--accent); }
+  .task-empty { font-size:12px; color:var(--text3); padding:6px 0; }
+
+  /* ── CURSOS EDITÁVEL ── */
+  .curso-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); margin-bottom:8px; }
+  .curso-icon { font-size:22px; flex-shrink:0; }
+  .curso-info { flex:1; min-width:0; }
+  .curso-name { font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .curso-url  { font-size:11px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .curso-del  { background:none; border:none; cursor:pointer; color:var(--text3); font-size:16px; padding:0 4px; flex-shrink:0; }
+  .curso-del:hover { color:var(--danger,#ef4444); }
+  .curso-add-form { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:12px; align-items:end; }
+  .curso-add-form input {
+    padding:8px 10px; background:var(--bg); border:1px solid var(--border);
+    border-radius:var(--radius-sm); font-family:inherit; font-size:13px; color:var(--text); outline:none;
+  }
+  .curso-add-form input:focus { border-color:var(--accent); }
+  .curso-add-form input::placeholder { color:var(--text3); }
+
+  /* ── CONTAS RECEBER/PAGAR ── */
+  .contas-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:18px; }
+  .contas-tab {
+    flex:1; padding:10px; text-align:center; font-size:14px; font-weight:600;
+    background:none; border:none; cursor:pointer; color:var(--text3);
+    border-bottom:2px solid transparent; margin-bottom:-1px; font-family:inherit;
+    transition:all .15s;
+  }
+  .contas-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .contas-panel { display:none; }
+  .contas-panel.active { display:block; }
+  .conta-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .conta-row:last-child { border-bottom:none; }
+  .conta-row .conta-desc { flex:1; font-size:13px; }
+  .conta-row .conta-valor { font-size:13px; font-weight:600; white-space:nowrap; }
+  .conta-row .conta-venc  { font-size:11px; color:var(--text3); white-space:nowrap; }
+  .conta-del { background:none; border:none; cursor:pointer; color:var(--text3); font-size:14px; }
+  .conta-del:hover { color:var(--danger,#ef4444); }
+  .conta-add-form { display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; margin-top:14px; align-items:end; }
+  .conta-add-form input {
+    padding:8px 10px; background:var(--bg); border:1px solid var(--border);
+    border-radius:var(--radius-sm); font-family:inherit; font-size:13px; color:var(--text); outline:none;
+  }
+  .conta-add-form input:focus { border-color:var(--accent); }
+  .conta-add-form input::placeholder { color:var(--text3); }
+  .conta-total { font-size:13px; font-weight:600; margin-top:12px; text-align:right; color:var(--text2); }
 </style>
 </head>
 <body>
@@ -322,6 +401,7 @@
       <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> Início</button>
       <button class="nav-btn" onclick="showPage('contacts')" id="nav-contacts"><span class="icon">👤</span> Contatos<span class="nav-badge" id="badge-contacts">0</span></button>
       <button class="nav-btn" onclick="showPage('calendar')" id="nav-calendar"><span class="icon">📅</span> Calendário<span class="nav-badge" id="badge-events">0</span></button>
+      <button class="nav-btn" onclick="showPage('tasks')" id="nav-tasks"><span class="icon">✅</span> Tarefas</button>
       <div class="nav-section-label">Acesso rápido</div>
       <a class="nav-btn nav-link" href="https://www.instagram.com" target="_blank"><span class="icon">📸</span> Instagram<span class="nav-ext">↗</span></a>
       <a class="nav-btn nav-link" href="https://web.whatsapp.com" target="_blank"><span class="icon">💬</span> WhatsApp<span class="nav-ext">↗</span></a>
@@ -416,6 +496,18 @@
     </div>
 
     <!-- CALENDAR -->
+
+    <!-- PAGE TAREFAS -->
+    <div class="page" id="page-tasks">
+      <div class="page-header" style="margin-bottom:20px">
+        <div>
+          <div class="page-title">✅ Tarefas</div>
+          <div class="page-subtitle" id="tasks-subtitle">Tarefas por colaborador</div>
+        </div>
+      </div>
+      <div class="tasks-grid" id="tasks-grid"></div>
+    </div>
+
     <div class="page" id="page-calendar">
       <div class="page-header">
         <div>
@@ -572,23 +664,15 @@
 
 <!-- MODAL MENSAGENS -->
 <div class="popup-modal-bg" id="modal-email">
-  <div class="popup-modal" style="max-width:480px">
+  <div class="popup-modal" style="max-width:500px">
     <button class="popup-close" onclick="closeEmailModal()">✕</button>
     <h2>✉️ Mensagens</h2>
-    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse seus serviços de mensagem favoritos:</p>
-    <div style="display:grid;gap:10px">
-      <a href="https://mail.google.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">📧</span><div><div style="font-weight:600">Gmail</div><div style="font-size:12px;color:var(--text3)">mail.google.com</div></div>
-      </a>
-      <a href="https://outlook.live.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">📨</span><div><div style="font-weight:600">Outlook</div><div style="font-size:12px;color:var(--text3)">outlook.live.com</div></div>
-      </a>
-      <a href="https://web.whatsapp.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">💬</span><div><div style="font-weight:600">WhatsApp Web</div><div style="font-size:12px;color:var(--text3)">web.whatsapp.com</div></div>
-      </a>
-      <a href="https://telegram.org" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">✈️</span><div><div style="font-weight:600">Telegram</div><div style="font-size:12px;color:var(--text3)">telegram.org</div></div>
-      </a>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:16px">Seus serviços de e-mail e mensagens:</p>
+    <div id="email-list"></div>
+    <div class="curso-add-form">
+      <input type="text" id="email-nome-input" placeholder="Nome (ex: Gmail, Outlook...)">
+      <input type="url"  id="email-url-input"  placeholder="https://...">
+      <button class="btn btn-primary btn-sm" onclick="addEmailLink()">+ Adicionar</button>
     </div>
     <div style="margin-top:16px;text-align:right">
       <button class="btn btn-ghost" onclick="closeEmailModal()">Fechar</button>
@@ -598,23 +682,15 @@
 
 <!-- MODAL CURSOS -->
 <div class="popup-modal-bg" id="modal-cursos">
-  <div class="popup-modal" style="max-width:480px">
+  <div class="popup-modal" style="max-width:500px">
     <button class="popup-close" onclick="closeCursosModal()">✕</button>
     <h2>🎓 Cursos</h2>
-    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse suas plataformas de ensino:</p>
-    <div style="display:grid;gap:10px">
-      <a href="https://www.coursera.org" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🎓</span><div><div style="font-weight:600">Coursera</div><div style="font-size:12px;color:var(--text3)">coursera.org</div></div>
-      </a>
-      <a href="https://www.udemy.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">📚</span><div><div style="font-weight:600">Udemy</div><div style="font-size:12px;color:var(--text3)">udemy.com</div></div>
-      </a>
-      <a href="https://www.youtube.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">▶️</span><div><div style="font-weight:600">YouTube</div><div style="font-size:12px;color:var(--text3)">youtube.com</div></div>
-      </a>
-      <a href="https://www.alura.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🚀</span><div><div style="font-weight:600">Alura</div><div style="font-size:12px;color:var(--text3)">alura.com.br</div></div>
-      </a>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:16px">Seus cursos e plataformas de ensino:</p>
+    <div id="cursos-list"></div>
+    <div class="curso-add-form">
+      <input type="text" id="curso-nome-input" placeholder="Nome do curso / plataforma">
+      <input type="url" id="curso-url-input" placeholder="https://...">
+      <button class="btn btn-primary btn-sm" onclick="addCurso()">+ Adicionar</button>
     </div>
     <div style="margin-top:16px;text-align:right">
       <button class="btn btn-ghost" onclick="closeCursosModal()">Fechar</button>
@@ -650,29 +726,41 @@
 
 <!-- MODAL CONTAS -->
 <div class="popup-modal-bg" id="modal-contas">
-  <div class="popup-modal" style="max-width:520px">
+  <div class="popup-modal" style="max-width:560px">
     <button class="popup-close" onclick="closeContasModal()">✕</button>
     <h2>💰 Contas</h2>
-    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse seus bancos e serviços financeiros:</p>
-    <div style="display:grid;gap:10px">
-      <a href="https://www.bb.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🏦</span><div><div style="font-weight:600">Banco do Brasil</div><div style="font-size:12px;color:var(--text3)">bb.com.br</div></div>
-      </a>
-      <a href="https://www.itau.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🏦</span><div><div style="font-weight:600">Itaú</div><div style="font-size:12px;color:var(--text3)">itau.com.br</div></div>
-      </a>
-      <a href="https://nubank.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">💳</span><div><div style="font-weight:600">Nubank</div><div style="font-size:12px;color:var(--text3)">nubank.com.br</div></div>
-      </a>
-      <a href="https://www.mercadopago.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">💵</span><div><div style="font-weight:600">Mercado Pago</div><div style="font-size:12px;color:var(--text3)">mercadopago.com.br</div></div>
-      </a>
+    <div class="contas-tabs">
+      <button class="contas-tab active" id="tab-receber" onclick="switchContasTab('receber')">📥 Contas a Receber</button>
+      <button class="contas-tab"        id="tab-pagar"   onclick="switchContasTab('pagar')">📤 Contas a Pagar</button>
+    </div>
+    <!-- RECEBER -->
+    <div class="contas-panel active" id="panel-receber">
+      <div id="lista-receber"></div>
+      <div class="conta-add-form">
+        <input type="text"   id="rec-desc"  placeholder="Descrição">
+        <input type="number" id="rec-valor" placeholder="R$ 0,00" min="0" step="0.01">
+        <input type="date"   id="rec-venc">
+        <button class="btn btn-primary btn-sm" onclick="addConta('receber')">+</button>
+      </div>
+      <div class="conta-total" id="total-receber"></div>
+    </div>
+    <!-- PAGAR -->
+    <div class="contas-panel" id="panel-pagar">
+      <div id="lista-pagar"></div>
+      <div class="conta-add-form">
+        <input type="text"   id="pag-desc"  placeholder="Descrição">
+        <input type="number" id="pag-valor" placeholder="R$ 0,00" min="0" step="0.01">
+        <input type="date"   id="pag-venc">
+        <button class="btn btn-primary btn-sm" onclick="addConta('pagar')">+</button>
+      </div>
+      <div class="conta-total" id="total-pagar"></div>
     </div>
     <div style="margin-top:16px;text-align:right">
       <button class="btn btn-ghost" onclick="closeContasModal()">Fechar</button>
     </div>
   </div>
 </div>
+
 
 <script>
 // ============================================================
@@ -763,6 +851,248 @@ function clearLockError() {
 }
 
 // ============================================================
+
+// ============================================================
+// TAREFAS
+// ============================================================
+const TASK_PEOPLE = [
+  { id:'marco',    name:'Marco',    color:'av-blue'   },
+  { id:'lucas',    name:'Lucas',    color:'av-green'  },
+  { id:'anderson', name:'Anderson', color:'av-amber'  },
+  { id:'torres',   name:'Torres',   color:'av-coral'  },
+  { id:'mauricio', name:'Maurício', color:'av-purple' },
+];
+
+function getTaskData() {
+  try { return JSON.parse(localStorage.getItem('agenda_tasks_v2') || '{}'); } catch(e) { return {}; }
+}
+function saveTaskData(d) { localStorage.setItem('agenda_tasks_v2', JSON.stringify(d)); }
+
+function renderTasks() {
+  var grid = document.getElementById('tasks-grid');
+  if (!grid) return;
+  var data = getTaskData();
+  grid.innerHTML = '';
+  TASK_PEOPLE.forEach(function(p) {
+    var items = data[p.id] || [];
+    var card = document.createElement('div');
+    card.className = 'task-card';
+
+    var inits = p.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+    var header = document.createElement('div');
+    header.className = 'task-card-header';
+    header.innerHTML = '<div class="task-avatar ' + p.color + '">' + inits + '</div>'
+      + '<div class="task-person-name">' + p.name + '</div>';
+    card.appendChild(header);
+
+    var ul = document.createElement('ul');
+    ul.className = 'task-list';
+    if (!items.length) {
+      var empty = document.createElement('li');
+      empty.className = 'task-empty';
+      empty.textContent = 'Nenhuma tarefa ainda.';
+      ul.appendChild(empty);
+    } else {
+      items.forEach(function(t, i) {
+        var li = document.createElement('li');
+        li.className = 'task-item';
+
+        var cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.className = 'task-cb'; cb.checked = !!t.done;
+        cb.dataset.pid = p.id; cb.dataset.idx = i;
+        cb.addEventListener('change', function() {
+          var d = getTaskData();
+          if (d[this.dataset.pid] && d[this.dataset.pid][parseInt(this.dataset.idx)] !== undefined)
+            d[this.dataset.pid][parseInt(this.dataset.idx)].done = this.checked;
+          saveTaskData(d); renderTasks();
+        });
+
+        var sp = document.createElement('span');
+        sp.className = 'task-text' + (t.done ? ' done' : '');
+        sp.textContent = t.text;
+
+        var del = document.createElement('button');
+        del.className = 'task-del'; del.textContent = '✕'; del.title = 'Remover';
+        del.dataset.pid = p.id; del.dataset.idx = i;
+        del.addEventListener('click', function() {
+          var d = getTaskData();
+          if (d[this.dataset.pid]) d[this.dataset.pid].splice(parseInt(this.dataset.idx), 1);
+          saveTaskData(d); renderTasks();
+        });
+
+        li.appendChild(cb); li.appendChild(sp); li.appendChild(del);
+        ul.appendChild(li);
+      });
+    }
+    card.appendChild(ul);
+
+    var row = document.createElement('div');
+    row.className = 'task-add-row';
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = 'Nova tarefa...'; inp.dataset.pid = p.id;
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') addTask(this.dataset.pid, this); });
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-sm'; btn.textContent = '+';
+    btn.dataset.pid = p.id;
+    btn.addEventListener('click', function() {
+      var input = this.previousSibling;
+      addTask(this.dataset.pid, input);
+    });
+    row.appendChild(inp); row.appendChild(btn);
+    card.appendChild(row);
+    grid.appendChild(card);
+  });
+}
+
+function addTask(pid, inputEl) {
+  var text = inputEl.value.trim();
+  if (!text) return;
+  var d = getTaskData();
+  if (!d[pid]) d[pid] = [];
+  d[pid].push({ text: text, done: false });
+  saveTaskData(d);
+  inputEl.value = '';
+  renderTasks();
+}
+
+// ============================================================
+// CURSOS (editável)
+// ============================================================
+const DEFAULT_CURSOS = [
+  { nome:'Coursera', url:'https://www.coursera.org',   icon:'🎓' },
+  { nome:'Udemy',    url:'https://www.udemy.com',      icon:'📚' },
+  { nome:'YouTube',  url:'https://www.youtube.com',    icon:'▶️' },
+  { nome:'Alura',    url:'https://www.alura.com.br',   icon:'🚀' },
+];
+
+function getCursos() {
+  try {
+    var s = localStorage.getItem('agenda_cursos');
+    return s ? JSON.parse(s) : DEFAULT_CURSOS.slice();
+  } catch(e) { return DEFAULT_CURSOS.slice(); }
+}
+function saveCursos(list) { localStorage.setItem('agenda_cursos', JSON.stringify(list)); }
+
+function renderCursos() {
+  var container = document.getElementById('cursos-list');
+  if (!container) return;
+  var list = getCursos();
+  container.innerHTML = '';
+  if (!list.length) {
+    container.innerHTML = '<p style="font-size:13px;color:var(--text3)">Nenhum curso cadastrado.</p>';
+    return;
+  }
+  list.forEach(function(c, i) {
+    var div = document.createElement('div');
+    div.className = 'curso-item';
+    var icon = document.createElement('span');
+    icon.className = 'curso-icon'; icon.textContent = c.icon || '🎓';
+    var info = document.createElement('div');
+    info.className = 'curso-info';
+    info.innerHTML = '<div class="curso-name"><a href="' + c.url + '" target="_blank" style="color:var(--text);text-decoration:none">' + c.nome + '</a></div>'
+      + '<div class="curso-url">' + c.url + '</div>';
+    var del = document.createElement('button');
+    del.className = 'curso-del'; del.textContent = '✕'; del.title = 'Remover';
+    del.dataset.idx = i;
+    del.addEventListener('click', function() {
+      var l = getCursos(); l.splice(parseInt(this.dataset.idx), 1); saveCursos(l); renderCursos();
+    });
+    div.appendChild(icon); div.appendChild(info); div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+function addCurso() {
+  var nome = document.getElementById('curso-nome-input').value.trim();
+  var url  = document.getElementById('curso-url-input').value.trim();
+  if (!nome) { alert('Informe o nome do curso.'); return; }
+  if (!url)  { alert('Informe a URL.'); return; }
+  if (!url.startsWith('http')) url = 'https://' + url;
+  var list = getCursos();
+  list.push({ nome: nome, url: url, icon: '🎓' });
+  saveCursos(list);
+  document.getElementById('curso-nome-input').value = '';
+  document.getElementById('curso-url-input').value = '';
+  renderCursos();
+}
+
+function openCursosModal() {
+  renderCursos();
+  document.getElementById('modal-cursos').classList.add('open');
+}
+function closeCursosModal() { document.getElementById('modal-cursos').classList.remove('open'); }
+
+// ============================================================
+// CONTAS RECEBER / PAGAR
+// ============================================================
+function getContas(tipo) {
+  try { return JSON.parse(localStorage.getItem('agenda_contas_' + tipo) || '[]'); } catch(e) { return []; }
+}
+function saveContas(tipo, list) { localStorage.setItem('agenda_contas_' + tipo, JSON.stringify(list)); }
+
+function switchContasTab(tab) {
+  document.getElementById('tab-receber').classList.toggle('active', tab === 'receber');
+  document.getElementById('tab-pagar').classList.toggle('active', tab === 'pagar');
+  document.getElementById('panel-receber').classList.toggle('active', tab === 'receber');
+  document.getElementById('panel-pagar').classList.toggle('active', tab === 'pagar');
+}
+
+function renderContas(tipo) {
+  var list = getContas(tipo);
+  var container = document.getElementById('lista-' + tipo);
+  var totalEl   = document.getElementById('total-' + tipo);
+  if (!container) return;
+  container.innerHTML = '';
+  if (!list.length) {
+    container.innerHTML = '<p style="font-size:13px;color:var(--text3);padding:8px 0">Nenhuma conta cadastrada.</p>';
+    if (totalEl) totalEl.textContent = '';
+    return;
+  }
+  var total = 0;
+  list.forEach(function(c, i) {
+    total += parseFloat(c.valor) || 0;
+    var row = document.createElement('div');
+    row.className = 'conta-row';
+    var desc = document.createElement('span'); desc.className = 'conta-desc'; desc.textContent = c.desc;
+    var valor = document.createElement('span'); valor.className = 'conta-valor';
+    valor.textContent = 'R$ ' + parseFloat(c.valor).toFixed(2).replace('.',',');
+    var venc = document.createElement('span'); venc.className = 'conta-venc';
+    venc.textContent = c.venc ? new Date(c.venc + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+    var del = document.createElement('button'); del.className = 'conta-del'; del.textContent = '✕';
+    del.dataset.tipo = tipo; del.dataset.idx = i;
+    del.addEventListener('click', function() {
+      var l = getContas(this.dataset.tipo); l.splice(parseInt(this.dataset.idx), 1);
+      saveContas(this.dataset.tipo, l); renderContas(this.dataset.tipo);
+    });
+    row.appendChild(desc); row.appendChild(venc); row.appendChild(valor); row.appendChild(del);
+    container.appendChild(row);
+  });
+  if (totalEl) totalEl.textContent = 'Total: R$ ' + total.toFixed(2).replace('.',',');
+}
+
+function addConta(tipo) {
+  var desc  = document.getElementById(tipo === 'receber' ? 'rec-desc'  : 'pag-desc').value.trim();
+  var valor = document.getElementById(tipo === 'receber' ? 'rec-valor' : 'pag-valor').value;
+  var venc  = document.getElementById(tipo === 'receber' ? 'rec-venc'  : 'pag-venc').value;
+  if (!desc) { alert('Informe a descrição.'); return; }
+  var list = getContas(tipo);
+  list.push({ desc: desc, valor: parseFloat(valor) || 0, venc: venc });
+  saveContas(tipo, list);
+  document.getElementById(tipo === 'receber' ? 'rec-desc'  : 'pag-desc').value = '';
+  document.getElementById(tipo === 'receber' ? 'rec-valor' : 'pag-valor').value = '';
+  document.getElementById(tipo === 'receber' ? 'rec-venc'  : 'pag-venc').value = '';
+  renderContas(tipo);
+}
+
+function openContasModal() {
+  renderContas('receber');
+  renderContas('pagar');
+  switchContasTab('receber');
+  document.getElementById('modal-contas').classList.add('open');
+}
+function closeContasModal() { document.getElementById('modal-contas').classList.remove('open'); }
+
+
 // INIT
 // ============================================================
 async function init() {
@@ -793,6 +1123,7 @@ function showPage(id) {
   document.getElementById('page-' + id).classList.add('active');
   const nb = document.getElementById('nav-' + id);
   if (nb) nb.classList.add('active');
+  if (id === 'tasks') renderTasks();
   closeMobileMenu();
 }
 
@@ -1146,7 +1477,75 @@ function updateProfilePhoto(input) {
 // ============================================================
 // MODAIS DE ACESSO RÁPIDO
 // ============================================================
-function openEmailModal() { document.getElementById('modal-email').classList.add('open'); }
+// ── EMAIL / MENSAGENS (editável) ──────────────────────────────────────────
+const DEFAULT_EMAILS = [
+  { nome:'Gmail',         url:'https://mail.google.com',   icon:'📧' },
+  { nome:'Outlook',       url:'https://outlook.live.com',  icon:'📨' },
+  { nome:'WhatsApp Web',  url:'https://web.whatsapp.com',  icon:'💬' },
+  { nome:'Telegram',      url:'https://telegram.org',      icon:'✈️' },
+];
+
+function getEmailLinks() {
+  try {
+    var s = localStorage.getItem('agenda_email_links');
+    return s ? JSON.parse(s) : DEFAULT_EMAILS.slice();
+  } catch(e) { return DEFAULT_EMAILS.slice(); }
+}
+function saveEmailLinks(list) { localStorage.setItem('agenda_email_links', JSON.stringify(list)); }
+
+function renderEmailLinks() {
+  var container = document.getElementById('email-list');
+  if (!container) return;
+  var list = getEmailLinks();
+  container.innerHTML = '';
+  if (!list.length) {
+    container.innerHTML = '<p style="font-size:13px;color:var(--text3);margin-bottom:8px">Nenhum link cadastrado.</p>';
+    return;
+  }
+  list.forEach(function(c, i) {
+    var div = document.createElement('div');
+    div.className = 'curso-item';
+
+    var icon = document.createElement('span');
+    icon.className = 'curso-icon'; icon.textContent = c.icon || '✉️';
+
+    var info = document.createElement('div');
+    info.className = 'curso-info';
+    info.innerHTML = '<div class="curso-name">'
+      + '<a href="' + c.url + '" target="_blank" style="color:var(--text);text-decoration:none">' + c.nome + '</a>'
+      + '</div><div class="curso-url">' + c.url + '</div>';
+
+    var del = document.createElement('button');
+    del.className = 'curso-del'; del.textContent = '✕'; del.title = 'Remover';
+    del.dataset.idx = i;
+    del.addEventListener('click', function() {
+      var l = getEmailLinks(); l.splice(parseInt(this.dataset.idx), 1);
+      saveEmailLinks(l); renderEmailLinks();
+    });
+
+    div.appendChild(icon); div.appendChild(info); div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+function addEmailLink() {
+  var nome = document.getElementById('email-nome-input').value.trim();
+  var url  = document.getElementById('email-url-input').value.trim();
+  if (!nome) { alert('Informe o nome do serviço.'); return; }
+  if (!url)  { alert('Informe a URL.'); return; }
+  if (!url.startsWith('http')) url = 'https://' + url;
+  var list = getEmailLinks();
+  list.push({ nome: nome, url: url, icon: '✉️' });
+  saveEmailLinks(list);
+  document.getElementById('email-nome-input').value = '';
+  document.getElementById('email-url-input').value = '';
+  renderEmailLinks();
+}
+
+function openEmailModal() {
+  renderEmailLinks();
+  document.getElementById('modal-email').classList.add('open');
+}
 function closeEmailModal() { document.getElementById('modal-email').classList.remove('open'); }
 function openCursosModal() { document.getElementById('modal-cursos').classList.add('open'); }
 function closeCursosModal() { document.getElementById('modal-cursos').classList.remove('open'); }
