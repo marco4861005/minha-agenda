@@ -57,13 +57,17 @@
     .calendar-layout { grid-template-columns: 1fr !important; gap: 16px !important; }
     .contacts-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important; gap: 12px !important; }
     .quick-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
+    .news-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
     .modal { width: 95% !important; max-width: 95% !important; padding: 20px !important; margin: 10px; }
     .form-row { grid-template-columns: 1fr !important; gap: 12px !important; }
+    .stat-value { font-size: 24px !important; }
   }
   @media (max-width: 480px) {
     .quick-grid { grid-template-columns: repeat(3, 1fr) !important; }
     .stats-row { grid-template-columns: 1fr !important; }
     .main { padding: 16px 12px; }
+    .page-title { font-size: 22px !important; }
+    .contact-card { padding: 14px !important; }
   }
 
   /* SIDEBAR ELEMENTS */
@@ -253,6 +257,32 @@
   .popup-close { position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;transition:color 0.15s; }
   .popup-close:hover { color: var(--text); }
 
+  /* NEWS */
+  .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .news-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: transform 0.2s; }
+  .news-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .news-source-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 12px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .news-source-name { font-weight: 600; font-size: 14px; }
+  .news-source-link { font-size: 12px; color: var(--accent); text-decoration: none; }
+  .news-source-link:hover { text-decoration: underline; }
+  .news-item { padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .news-item:last-child { border-bottom: none; }
+  .news-item:hover { background: var(--bg); }
+  .news-item a { font-size: 13px; color: var(--text); text-decoration: none; line-height: 1.4; display: block; }
+  .news-item a:hover { color: var(--accent); }
+  .news-item-date { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* SPINNER / LOADING */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
+  .loading-spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  /* ATTACH DROP */
+  .attach-drop { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); position: relative; }
+  .attach-drop:hover, .attach-drop.dragover { border-color: var(--accent); background: var(--accent-light); transform: scale(1.02); }
+  .attach-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
   /* PIN change section */
   .pin-section { background: var(--bg); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); margin-top: 16px; }
   .pin-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
@@ -295,6 +325,10 @@
       <div class="nav-section-label">Acesso rápido</div>
       <a class="nav-btn nav-link" href="https://www.instagram.com" target="_blank"><span class="icon">📸</span> Instagram<span class="nav-ext">↗</span></a>
       <a class="nav-btn nav-link" href="https://web.whatsapp.com" target="_blank"><span class="icon">💬</span> WhatsApp<span class="nav-ext">↗</span></a>
+      <button class="nav-btn" onclick="openEmailModal()"><span class="icon">✉️</span> Mensagens</button>
+      <button class="nav-btn" onclick="openCursosModal()"><span class="icon">🎓</span> Cursos</button>
+      <button class="nav-btn" onclick="openSkyModal()"><span class="icon">📺</span> Sky+</button>
+      <button class="nav-btn" onclick="openContasModal()"><span class="icon">💰</span> Contas</button>
       <button class="nav-btn" onclick="openSettingsModal()"><span class="icon">⚙️</span> Configurações</button>
     </nav>
     <div class="sync-status" id="sync-status">
@@ -318,12 +352,12 @@
       <div class="quick-grid">
         <button class="quick-card" onclick="showPage('contacts');closeMobileMenu()"><div class="quick-icon">👤</div><div class="quick-label">Contatos</div></button>
         <button class="quick-card" onclick="showPage('calendar');closeMobileMenu()"><div class="quick-icon">📅</div><div class="quick-label">Calendário</div></button>
+        <button class="quick-card" onclick="scrollToNews()"><div class="quick-icon">📰</div><div class="quick-label">Notícias</div></button>
+        <button class="quick-card" onclick="openEmailModal()"><div class="quick-icon">✉️</div><div class="quick-label">Mensagens</div></button>
         <a class="quick-card" href="https://web.whatsapp.com" target="_blank" style="text-decoration:none"><div class="quick-icon">💬</div><div class="quick-label">WhatsApp</div></a>
-        <a class="quick-card" href="https://www.instagram.com" target="_blank" style="text-decoration:none"><div class="quick-icon">📸</div><div class="quick-label">Instagram</div></a>
-        <a class="quick-card" href="https://mail.google.com" target="_blank" style="text-decoration:none"><div class="quick-icon">✉️</div><div class="quick-label">Gmail</div></a>
-        <a class="quick-card" href="https://calendar.google.com" target="_blank" style="text-decoration:none"><div class="quick-icon">🗓️</div><div class="quick-label">Google Cal</div></a>
-        <a class="quick-card" href="https://drive.google.com" target="_blank" style="text-decoration:none"><div class="quick-icon">💾</div><div class="quick-label">Drive</div></a>
-        <button class="quick-card" onclick="openSettingsModal()"><div class="quick-icon">⚙️</div><div class="quick-label">Config.</div></button>
+        <button class="quick-card" onclick="openCursosModal()"><div class="quick-icon">🎓</div><div class="quick-label">Cursos</div></button>
+        <button class="quick-card" onclick="openSkyModal()"><div class="quick-icon">📺</div><div class="quick-label">Sky+</div></button>
+        <button class="quick-card" onclick="openContasModal()"><div class="quick-icon">💰</div><div class="quick-label">Contas</div></button>
       </div>
 
       <div class="stats-row" style="margin-top:16px">
@@ -339,6 +373,29 @@
           <button class="btn btn-ghost btn-sm" onclick="showPage('calendar')">Ver todos</button>
         </div>
         <div id="dash-upcoming"></div>
+      </div>
+
+      <!-- NOTÍCIAS -->
+      <div style="margin-top:28px" id="news-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="font-family:'DM Serif Display',serif;font-size:20px">📰 Notícias</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadNews()">↺ Atualizar</button>
+        </div>
+        <div class="news-grid" id="news-grid">
+          <div class="news-card">
+            <div class="news-source-header"><span class="news-source-name">G1</span><a class="news-source-link" href="https://g1.globo.com" target="_blank">Ver site ↗</a></div>
+            <div style="padding:16px;color:var(--text3);font-size:13px;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Carregando...</div></div>
+          </div>
+          <div class="news-card">
+            <div class="news-source-header"><span class="news-source-name">UOL</span><a class="news-source-link" href="https://www.uol.com.br" target="_blank">Ver site ↗</a></div>
+            <div style="padding:16px;color:var(--text3);font-size:13px;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Carregando...</div></div>
+          </div>
+          <div class="news-card">
+            <div class="news-source-header"><span class="news-source-name">Folha de S.Paulo</span><a class="news-source-link" href="https://www.folha.uol.com.br" target="_blank">Ver site ↗</a></div>
+            <div style="padding:16px;color:var(--text3);font-size:13px;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Carregando...</div></div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:12px;text-align:center">As notícias são carregadas diretamente dos sites. Clique em qualquer título para ler a matéria completa.</p>
       </div>
     </div>
 
@@ -513,6 +570,110 @@
   </div>
 </div>
 
+<!-- MODAL MENSAGENS -->
+<div class="popup-modal-bg" id="modal-email">
+  <div class="popup-modal" style="max-width:480px">
+    <button class="popup-close" onclick="closeEmailModal()">✕</button>
+    <h2>✉️ Mensagens</h2>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse seus serviços de mensagem favoritos:</p>
+    <div style="display:grid;gap:10px">
+      <a href="https://mail.google.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">📧</span><div><div style="font-weight:600">Gmail</div><div style="font-size:12px;color:var(--text3)">mail.google.com</div></div>
+      </a>
+      <a href="https://outlook.live.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">📨</span><div><div style="font-weight:600">Outlook</div><div style="font-size:12px;color:var(--text3)">outlook.live.com</div></div>
+      </a>
+      <a href="https://web.whatsapp.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">💬</span><div><div style="font-weight:600">WhatsApp Web</div><div style="font-size:12px;color:var(--text3)">web.whatsapp.com</div></div>
+      </a>
+      <a href="https://telegram.org" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">✈️</span><div><div style="font-weight:600">Telegram</div><div style="font-size:12px;color:var(--text3)">telegram.org</div></div>
+      </a>
+    </div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-ghost" onclick="closeEmailModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CURSOS -->
+<div class="popup-modal-bg" id="modal-cursos">
+  <div class="popup-modal" style="max-width:480px">
+    <button class="popup-close" onclick="closeCursosModal()">✕</button>
+    <h2>🎓 Cursos</h2>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse suas plataformas de ensino:</p>
+    <div style="display:grid;gap:10px">
+      <a href="https://www.coursera.org" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🎓</span><div><div style="font-weight:600">Coursera</div><div style="font-size:12px;color:var(--text3)">coursera.org</div></div>
+      </a>
+      <a href="https://www.udemy.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">📚</span><div><div style="font-weight:600">Udemy</div><div style="font-size:12px;color:var(--text3)">udemy.com</div></div>
+      </a>
+      <a href="https://www.youtube.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">▶️</span><div><div style="font-weight:600">YouTube</div><div style="font-size:12px;color:var(--text3)">youtube.com</div></div>
+      </a>
+      <a href="https://www.alura.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🚀</span><div><div style="font-weight:600">Alura</div><div style="font-size:12px;color:var(--text3)">alura.com.br</div></div>
+      </a>
+    </div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-ghost" onclick="closeCursosModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SKY+ -->
+<div class="popup-modal-bg" id="modal-sky">
+  <div class="popup-modal" style="max-width:480px">
+    <button class="popup-close" onclick="closeSkyModal()">✕</button>
+    <h2>📺 Sky+</h2>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse seus serviços de streaming:</p>
+    <div style="display:grid;gap:10px">
+      <a href="https://www.sky.com.br/skyplay" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">📺</span><div><div style="font-weight:600">Sky Play</div><div style="font-size:12px;color:var(--text3)">sky.com.br/skyplay</div></div>
+      </a>
+      <a href="https://www.netflix.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🎬</span><div><div style="font-weight:600">Netflix</div><div style="font-size:12px;color:var(--text3)">netflix.com</div></div>
+      </a>
+      <a href="https://www.primevideo.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🎥</span><div><div style="font-weight:600">Prime Video</div><div style="font-size:12px;color:var(--text3)">primevideo.com</div></div>
+      </a>
+      <a href="https://www.globoplay.globo.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🌐</span><div><div style="font-weight:600">Globoplay</div><div style="font-size:12px;color:var(--text3)">globoplay.globo.com</div></div>
+      </a>
+    </div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-ghost" onclick="closeSkyModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTAS -->
+<div class="popup-modal-bg" id="modal-contas">
+  <div class="popup-modal" style="max-width:520px">
+    <button class="popup-close" onclick="closeContasModal()">✕</button>
+    <h2>💰 Contas</h2>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse seus bancos e serviços financeiros:</p>
+    <div style="display:grid;gap:10px">
+      <a href="https://www.bb.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🏦</span><div><div style="font-weight:600">Banco do Brasil</div><div style="font-size:12px;color:var(--text3)">bb.com.br</div></div>
+      </a>
+      <a href="https://www.itau.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">🏦</span><div><div style="font-weight:600">Itaú</div><div style="font-size:12px;color:var(--text3)">itau.com.br</div></div>
+      </a>
+      <a href="https://nubank.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">💳</span><div><div style="font-weight:600">Nubank</div><div style="font-size:12px;color:var(--text3)">nubank.com.br</div></div>
+      </a>
+      <a href="https://www.mercadopago.com.br" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
+        <span style="font-size:22px">💵</span><div><div style="font-weight:600">Mercado Pago</div><div style="font-size:12px;color:var(--text3)">mercadopago.com.br</div></div>
+      </a>
+    </div>
+    <div style="margin-top:16px;text-align:right">
+      <button class="btn btn-ghost" onclick="closeContasModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // STORAGE NA NUVEM (window.storage do Claude Artifact)
@@ -607,6 +768,10 @@ function clearLockError() {
 async function init() {
   await loadFromCloud();
   updateProfileName();
+  // Restaurar foto de perfil se salva
+  if (db.settings.photo) {
+    document.getElementById('profile-photo-img').src = db.settings.photo;
+  }
   renderDashboard();
   renderContacts();
   const now = new Date();
@@ -616,6 +781,7 @@ async function init() {
   renderCalendar();
   renderEventsList();
   updateBadges();
+  loadNews();
 }
 
 // ============================================================
@@ -975,6 +1141,67 @@ function updateProfilePhoto(input) {
     showToast('Foto atualizada!', 'success');
   };
   reader.readAsDataURL(file);
+}
+
+// ============================================================
+// MODAIS DE ACESSO RÁPIDO
+// ============================================================
+function openEmailModal() { document.getElementById('modal-email').classList.add('open'); }
+function closeEmailModal() { document.getElementById('modal-email').classList.remove('open'); }
+function openCursosModal() { document.getElementById('modal-cursos').classList.add('open'); }
+function closeCursosModal() { document.getElementById('modal-cursos').classList.remove('open'); }
+function openSkyModal() { document.getElementById('modal-sky').classList.add('open'); }
+function closeSkyModal() { document.getElementById('modal-sky').classList.remove('open'); }
+function openContasModal() { document.getElementById('modal-contas').classList.add('open'); }
+function closeContasModal() { document.getElementById('modal-contas').classList.remove('open'); }
+
+// ============================================================
+// NOTÍCIAS (via RSS2JSON proxy público)
+// ============================================================
+function scrollToNews() {
+  const el = document.getElementById('news-section');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function loadNews() {
+  const sources = [
+    { id: 'news-g1', name: 'G1', url: 'https://g1.globo.com/rss/g1/', site: 'https://g1.globo.com' },
+    { id: 'news-uol', name: 'UOL', url: 'https://rss.uol.com.br/feed/noticias.xml', site: 'https://www.uol.com.br' },
+    { id: 'news-folha', name: 'Folha de S.Paulo', url: 'https://feeds.folha.uol.com.br/emcimadahora/rss091.xml', site: 'https://www.folha.uol.com.br' }
+  ];
+
+  const grid = document.getElementById('news-grid');
+  grid.innerHTML = sources.map(s => `
+    <div class="news-card">
+      <div class="news-source-header">
+        <span class="news-source-name">${s.name}</span>
+        <a class="news-source-link" href="${s.site}" target="_blank">Ver site ↗</a>
+      </div>
+      <div id="${s.id}" style="padding:16px;color:var(--text3);font-size:13px;text-align:center">
+        <div class="spinner"></div><div style="margin-top:8px">Carregando...</div>
+      </div>
+    </div>`).join('');
+
+  for (const src of sources) {
+    try {
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}&count=5`;
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      const el = document.getElementById(src.id);
+      if (data.status === 'ok' && data.items?.length) {
+        el.innerHTML = data.items.map(item => `
+          <div class="news-item">
+            <a href="${item.link}" target="_blank">${item.title}</a>
+            <div class="news-item-date">${new Date(item.pubDate).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+          </div>`).join('');
+      } else {
+        el.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">Não foi possível carregar.<br><a href="${src.site}" target="_blank" style="color:var(--accent)">Abrir site ↗</a></div>`;
+      }
+    } catch {
+      const el = document.getElementById(src.id);
+      if (el) el.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">Erro ao carregar.<br><a href="https://g1.globo.com" target="_blank" style="color:var(--accent)">Abrir site ↗</a></div>`;
+    }
+  }
 }
 
 // ============================================================
