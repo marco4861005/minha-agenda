@@ -1,1698 +1,706 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>Agenda Pessoal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0A1628;
-    --surface: #0F2040;
-    --surface2: #142850;
-    --border: #1E3A6E;
-    --text: #E8F0FF;
-    --text2: #8AA4CC;
-    --text3: #4A6A9A;
-    --accent: #4C9EFF;
-    --accent-light: #0A1E3D;
-    --accent2: #F0A030;
-    --accent2-light: #2A1A05;
-    --danger: #E05555;
-    --danger-light: #2B1010;
-    --shadow: 0 2px 16px rgba(0,0,0,0.5);
-    --radius: 12px;
-    --radius-sm: 8px;
-    --sidebar-width: 260px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
-  .app { display: flex; height: 100vh; overflow: hidden; position: relative; }
-
-  /* SIDEBAR */
-  .sidebar {
-    width: var(--sidebar-width); min-width: var(--sidebar-width);
-    background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    transition: transform 0.3s ease; z-index: 100;
-    overflow-y: auto; overflow-x: hidden;
-  }
-  .mobile-menu-toggle {
-    display: none; position: fixed; top: 16px; left: 16px; z-index: 101;
-    background: var(--accent); border: none; border-radius: 50%;
-    width: 48px; height: 48px; font-size: 24px; cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3); color: white; transition: all 0.2s;
-  }
-  .mobile-menu-toggle:hover { background: var(--accent2); transform: scale(1.05); }
-  .main { flex: 1; overflow-y: auto; padding: 24px 28px; }
-
-  @media (max-width: 768px) {
-    .sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); box-shadow: 2px 0 16px rgba(0,0,0,0.3); }
-    .sidebar.mobile-open { transform: translateX(0); }
-    .mobile-menu-toggle { display: flex; align-items: center; justify-content: center; }
-    .main { padding: 20px 16px; width: 100%; }
-    .page-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 40px; }
-    .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
-    .calendar-layout { grid-template-columns: 1fr !important; gap: 16px !important; }
-    .contacts-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important; gap: 12px !important; }
-    .quick-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
-    .news-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
-    .modal { width: 95% !important; max-width: 95% !important; padding: 20px !important; margin: 10px; }
-    .form-row { grid-template-columns: 1fr !important; gap: 12px !important; }
-    .stat-value { font-size: 24px !important; }
-  }
-  @media (max-width: 480px) {
-    .quick-grid { grid-template-columns: repeat(3, 1fr) !important; }
-    .stats-row { grid-template-columns: 1fr !important; }
-    .main { padding: 16px 12px; }
-    .page-title { font-size: 22px !important; }
-    .contact-card { padding: 14px !important; }
-  }
-
-  /* SIDEBAR ELEMENTS */
-  .sidebar-brand { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); }
-  .sidebar-brand h1 { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); letter-spacing: -0.5px; }
-  .sidebar-brand p { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .nav { padding: 16px 12px; flex: 1; }
-  .nav-btn {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 10px 12px; border: none; background: none; cursor: pointer;
-    border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500; color: var(--text2); text-align: left; transition: all 0.15s;
-  }
-  .nav-btn:hover { background: var(--bg); color: var(--text); }
-  .nav-btn.active { background: var(--accent-light); color: var(--accent); }
-  .nav-btn .icon { font-size: 18px; width: 20px; }
-  .nav-link { text-decoration: none; display: flex; }
-  .nav-ext { margin-left: auto; font-size: 11px; color: var(--text3); }
-  .nav-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); padding: 14px 12px 6px; }
-  .nav-badge { margin-left: auto; background: var(--accent); color: white; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
-
-  /* SYNC STATUS */
-  .sync-status {
-    padding: 10px 14px;
-    border-top: 1px solid var(--border);
-    font-size: 11px; color: var(--text3);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
-  .sync-dot.synced { background: #5aab7a; }
-  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
-  .sync-dot.error { background: var(--danger); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  /* PAGES */
-  .page { display: none; animation: fadeIn 0.2s ease; }
-  .page.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* PAGE HEADER */
-  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-  .page-title { font-family: 'DM Serif Display', serif; font-size: 28px; letter-spacing: -0.5px; }
-  .page-subtitle { font-size: 13px; color: var(--text3); margin-top: 3px; }
-
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #3a7fd9; transform: translateY(-1px); }
-  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text2); }
-  .btn-ghost:hover { background: var(--bg); transform: translateY(-1px); }
-  .btn-danger { background: var(--danger-light); color: var(--danger); border: none; }
-  .btn-danger:hover { background: #3a1818; transform: translateY(-1px); }
-  .btn-sm { padding: 6px 12px; font-size: 13px; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  /* CARDS */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow); }
-
-  /* STATS */
-  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: transform 0.2s; }
-  .stat-card:hover { transform: translateY(-2px); border-color: var(--accent); }
-  .stat-label { font-size: 12px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .stat-value { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--text); }
-  .stat-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
-
-  /* QUICK GRID */
-  .quick-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; margin-bottom: 4px; }
-  .quick-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow); }
-  .quick-card:hover { background: var(--accent-light); border-color: var(--accent); transform: translateY(-3px); }
-  .quick-icon { font-size: 26px; }
-  .quick-label { font-size: 11px; font-weight: 600; color: var(--text2); text-align: center; line-height: 1.3; }
-
-  /* SEARCH */
-  .search-bar { position: relative; margin-bottom: 20px; }
-  .search-bar input { width: 100%; padding: 10px 16px 10px 40px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border 0.15s; }
-  .search-bar input:focus { border-color: var(--accent); }
-  .search-bar .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
-
-  /* CONTACTS */
-  .contacts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-  .contact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); transition: all 0.2s; cursor: pointer; }
-  .contact-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.2); transform: translateY(-2px); border-color: var(--accent); }
-  .contact-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; margin-bottom: 12px; }
-  .contact-name { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
-  .contact-role { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
-  .contact-info { font-size: 13px; color: var(--text2); line-height: 1.8; }
-  .contact-info span { display: block; }
-  .contact-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-
-  /* CALENDAR */
-  .calendar-layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
-  .mini-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .mini-cal-title { font-weight: 600; font-size: 15px; }
-  .mini-cal-nav { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 18px; padding: 4px 8px; border-radius: 6px; transition: background 0.15s; }
-  .mini-cal-nav:hover { background: var(--bg); }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-  .cal-day-name { text-align: center; font-size: 11px; color: var(--text3); font-weight: 600; padding: 4px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; border-radius: 50%; cursor: pointer; transition: all 0.1s; position: relative; }
-  .cal-day:hover:not(.empty) { background: var(--bg); transform: scale(1.05); }
-  .cal-day.today { background: var(--accent); color: white; font-weight: 600; }
-  .cal-day.selected { background: var(--accent-light); color: var(--accent); font-weight: 600; }
-  .cal-day.today.selected { background: var(--accent); color: white; }
-  .cal-day.has-event::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--accent2); }
-
-  /* EVENTS */
-  .event-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
-  .event-item:last-child { border-bottom: none; }
-  .event-time { font-size: 13px; color: var(--text3); font-weight: 500; min-width: 60px; padding-top: 2px; }
-  .event-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-  .event-body { flex: 1; }
-  .event-title { font-weight: 600; font-size: 14px; }
-  .event-desc { font-size: 13px; color: var(--text2); margin-top: 2px; }
-  .event-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .tag { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
-  .tag-work { background: var(--accent-light); color: var(--accent); }
-  .tag-personal { background: var(--accent2-light); color: var(--accent2); }
-  .tag-health { background: #1a3a2a; color: #5aab7a; }
-  .tag-other { background: var(--surface2); color: var(--text2); }
-
-  /* MODAL */
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-  .modal-bg.open { display: flex; }
-  .modal { background: var(--surface); border-radius: var(--radius); padding: 28px 32px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; animation: slideUp 0.2s ease; }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-  .modal h2 { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 20px; }
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--bg); outline: none; transition: border 0.15s; }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); background: var(--surface); }
-  .form-group textarea { resize: vertical; min-height: 72px; }
-  .form-group select option { background: var(--surface); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--text3); font-size: 20px; transition: color 0.15s; }
-  .modal-close:hover { color: var(--text); }
-
-  /* AVATAR COLORS */
-  .av-green { background: #1a3a2a; color: #5aab7a; }
-  .av-blue { background: #1a2a4a; color: #6a9aee; }
-  .av-amber { background: #3a2a0a; color: #e0aa30; }
-  .av-pink { background: #3a1a2a; color: #d47a9a; }
-  .av-purple { background: #2a1a4a; color: #9a7ada; }
-  .av-coral { background: #3a1a1a; color: #e07a5a; }
-
-  /* LOCK SCREEN */
-  #lock-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-  .lock-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; }
-  .lock-icon { font-size: 48px; margin-bottom: 16px; }
-  .lock-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; }
-  .lock-subtitle { font-size: 14px; color: var(--text3); margin-bottom: 24px; }
-  .lock-input-row { margin-bottom: 8px; }
-  .lock-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); font-size: 20px; color: var(--text); text-align: center; outline: none; letter-spacing: 6px; transition: border 0.15s; font-family: monospace; }
-  .lock-input:focus { border-color: var(--accent); }
-  .lock-error { font-size: 13px; color: var(--danger); min-height: 20px; margin-bottom: 6px; }
-  .lock-hint { font-size: 12px; color: var(--text3); margin-top: 14px; }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 20px; color: var(--text); font-size: 14px; z-index: 2000; animation: slideInRight 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-  @keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
-  .toast.error { border-color: var(--danger); }
-  .toast.success { border-color: #2D8A4E; }
-
-  /* EMPTY STATE */
-  .empty-state { text-align: center; padding: 48px 24px; color: var(--text3); }
-  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: var(--surface); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-  /* SIDEBAR PROFILE */
-  .sidebar-profile { display: flex; flex-direction: column; align-items: center; padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
-  .profile-photo-wrapper { position: relative; cursor: pointer; margin-bottom: 10px; }
-  .profile-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); display: block; }
-  .profile-edit-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; font-size: 20px; }
-  .profile-photo-wrapper:hover .profile-edit-overlay { opacity: 1; }
-  .profile-name { font-weight: 600; font-size: 14px; color: var(--text); text-align: center; max-width: 180px; }
-
-  /* POPUP MODAL */
-  .popup-modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-  .popup-modal-bg.open { display: flex; }
-  .popup-modal { background: var(--surface); border-radius: var(--radius); padding: 28px 32px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; animation: slideUp 0.2s ease; }
-  .popup-modal h2 { font-family:'DM Serif Display',serif; font-size:20px; margin-bottom:20px; }
-  .popup-close { position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;transition:color 0.15s; }
-  .popup-close:hover { color: var(--text); }
-
-  /* NEWS */
-  .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .news-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: transform 0.2s; }
-  .news-card:hover { transform: translateY(-2px); border-color: var(--accent); }
-  .news-source-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 12px; border-bottom: 1px solid var(--border); background: var(--surface2); }
-  .news-source-name { font-weight: 600; font-size: 14px; }
-  .news-source-link { font-size: 12px; color: var(--accent); text-decoration: none; }
-  .news-source-link:hover { text-decoration: underline; }
-  .news-item { padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
-  .news-item:last-child { border-bottom: none; }
-  .news-item:hover { background: var(--bg); }
-  .news-item a { font-size: 13px; color: var(--text); text-decoration: none; line-height: 1.4; display: block; }
-  .news-item a:hover { color: var(--accent); }
-  .news-item-date { font-size: 11px; color: var(--text3); margin-top: 4px; }
-
-  /* SPINNER / LOADING */
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
-  .loading-spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-
-  /* ATTACH DROP */
-  .attach-drop { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); position: relative; }
-  .attach-drop:hover, .attach-drop.dragover { border-color: var(--accent); background: var(--accent-light); transform: scale(1.02); }
-  .attach-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-
-  /* PIN change section */
-  .pin-section { background: var(--bg); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); margin-top: 16px; }
-  .pin-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
-
-  /* ── TAREFAS ── */
-  .tasks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
-  .task-card {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius); padding:18px;
-    box-shadow:var(--shadow);
-  }
-  .task-card-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-  .task-avatar {
-    width:40px; height:40px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:14px; flex-shrink:0; color:#fff;
-  }
-  .av-blue   { background:#3B82F6; }
-  .av-green  { background:#10B981; }
-  .av-amber  { background:#F59E0B; }
-  .av-coral  { background:#EF4444; }
-  .av-purple { background:#8B5CF6; }
-  .task-person-name { font-weight:600; font-size:14px; }
-  .task-list { list-style:none; margin:0; padding:0; }
-  .task-item { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); }
-  .task-item:last-child { border-bottom:none; }
-  .task-cb { margin-top:3px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
-  .task-text { font-size:13px; color:var(--text2); flex:1; line-height:1.4; }
-  .task-text.done { text-decoration:line-through; color:var(--text3); }
-  .task-del { background:none; border:none; cursor:pointer; color:var(--text3); font-size:13px; padding:0 2px; }
-  .task-del:hover { color:var(--danger,#ef4444); }
-  .task-add-row { display:flex; gap:6px; margin-top:10px; }
-  .task-add-row input {
-    flex:1; padding:6px 10px; background:var(--bg);
-    border:1px solid var(--border); border-radius:var(--radius-sm);
-    font-family:inherit; font-size:13px; color:var(--text); outline:none;
-  }
-  .task-add-row input:focus { border-color:var(--accent); }
-  .task-empty { font-size:12px; color:var(--text3); padding:6px 0; }
-
-  /* ── CURSOS EDITÁVEL ── */
-  .curso-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); margin-bottom:8px; }
-  .curso-icon { font-size:22px; flex-shrink:0; }
-  .curso-info { flex:1; min-width:0; }
-  .curso-name { font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .curso-url  { font-size:11px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .curso-del  { background:none; border:none; cursor:pointer; color:var(--text3); font-size:16px; padding:0 4px; flex-shrink:0; }
-  .curso-del:hover { color:var(--danger,#ef4444); }
-  .curso-add-form { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:12px; align-items:end; }
-  .curso-add-form input {
-    padding:8px 10px; background:var(--bg); border:1px solid var(--border);
-    border-radius:var(--radius-sm); font-family:inherit; font-size:13px; color:var(--text); outline:none;
-  }
-  .curso-add-form input:focus { border-color:var(--accent); }
-  .curso-add-form input::placeholder { color:var(--text3); }
-
-  /* ── CONTAS RECEBER/PAGAR ── */
-  .contas-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:18px; }
-  .contas-tab {
-    flex:1; padding:10px; text-align:center; font-size:14px; font-weight:600;
-    background:none; border:none; cursor:pointer; color:var(--text3);
-    border-bottom:2px solid transparent; margin-bottom:-1px; font-family:inherit;
-    transition:all .15s;
-  }
-  .contas-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-  .contas-panel { display:none; }
-  .contas-panel.active { display:block; }
-  .conta-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
-  .conta-row:last-child { border-bottom:none; }
-  .conta-row .conta-desc { flex:1; font-size:13px; }
-  .conta-row .conta-valor { font-size:13px; font-weight:600; white-space:nowrap; }
-  .conta-row .conta-venc  { font-size:11px; color:var(--text3); white-space:nowrap; }
-  .conta-del { background:none; border:none; cursor:pointer; color:var(--text3); font-size:14px; }
-  .conta-del:hover { color:var(--danger,#ef4444); }
-  .conta-add-form { display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; margin-top:14px; align-items:end; }
-  .conta-add-form input {
-    padding:8px 10px; background:var(--bg); border:1px solid var(--border);
-    border-radius:var(--radius-sm); font-family:inherit; font-size:13px; color:var(--text); outline:none;
-  }
-  .conta-add-form input:focus { border-color:var(--accent); }
-  .conta-add-form input::placeholder { color:var(--text3); }
-  .conta-total { font-size:13px; font-weight:600; margin-top:12px; text-align:right; color:var(--text2); }
-</style>
-</head>
-<body>
-
-<button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
-
-<!-- LOCK SCREEN -->
-<div id="lock-screen">
-  <div class="lock-card">
-    <div class="lock-icon">🔒</div>
-    <div class="lock-title">Agenda Privada</div>
-    <div class="lock-subtitle">Digite o PIN de acesso para continuar.</div>
-    <div class="lock-input-row">
-      <input class="lock-input" type="password" id="lock-pin-input" maxlength="6" placeholder="••••" oninput="clearLockError()" onkeydown="if(event.key==='Enter')tryUnlock()">
-    </div>
-    <div class="lock-error" id="lock-error"></div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="tryUnlock()">Entrar →</button>
-    <div class="lock-hint">PIN padrão: <strong>1234</strong></div>
-  </div>
-</div>
-
-<div class="app">
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-profile">
-      <div class="profile-photo-wrapper" onclick="document.getElementById('profile-photo-input').click()">
-        <img class="profile-photo" id="profile-photo-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Ccircle cx='36' cy='36' r='36' fill='%234C9EFF'/%3E%3Ctext x='36' y='48' text-anchor='middle' fill='white' font-size='28' font-weight='bold' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E" alt="Foto de perfil">
-        <div class="profile-edit-overlay">📷</div>
-      </div>
-      <div class="profile-name" id="profile-name-display">Minha Agenda</div>
-      <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="updateProfilePhoto(this)">
-    </div>
-    <nav class="nav">
-      <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> Início</button>
-      <button class="nav-btn" onclick="showPage('contacts')" id="nav-contacts"><span class="icon">👤</span> Contatos<span class="nav-badge" id="badge-contacts">0</span></button>
-      <button class="nav-btn" onclick="showPage('calendar')" id="nav-calendar"><span class="icon">📅</span> Calendário<span class="nav-badge" id="badge-events">0</span></button>
-      <button class="nav-btn" onclick="showPage('tasks')" id="nav-tasks"><span class="icon">✅</span> Tarefas</button>
-      <div class="nav-section-label">Acesso rápido</div>
-      <a class="nav-btn nav-link" href="https://www.instagram.com" target="_blank"><span class="icon">📸</span> Instagram<span class="nav-ext">↗</span></a>
-      <a class="nav-btn nav-link" href="https://web.whatsapp.com" target="_blank"><span class="icon">💬</span> WhatsApp<span class="nav-ext">↗</span></a>
-      <button class="nav-btn" onclick="openEmailModal()"><span class="icon">✉️</span> Mensagens</button>
-      <button class="nav-btn" onclick="openCursosModal()"><span class="icon">🎓</span> Cursos</button>
-      <button class="nav-btn" onclick="openSkyModal()"><span class="icon">📺</span> Sky+</button>
-      <button class="nav-btn" onclick="openContasModal()"><span class="icon">💰</span> Contas</button>
-      <button class="nav-btn" onclick="openSettingsModal()"><span class="icon">⚙️</span> Configurações</button>
-    </nav>
-    <div class="sync-status" id="sync-status">
-      <div class="sync-dot" id="sync-dot"></div>
-      <span id="sync-text">Verificando...</span>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main" onclick="closeMobileMenuOnClick(event)">
-
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
-      <div class="page-header">
-        <div>
-          <div class="page-title" id="dash-greeting">Bom dia! 👋</div>
-          <div class="page-subtitle" id="dash-date-sub"></div>
-        </div>
-      </div>
-
-      <div class="quick-grid">
-        <button class="quick-card" onclick="showPage('contacts');closeMobileMenu()"><div class="quick-icon">👤</div><div class="quick-label">Contatos</div></button>
-        <button class="quick-card" onclick="showPage('calendar');closeMobileMenu()"><div class="quick-icon">📅</div><div class="quick-label">Calendário</div></button>
-        <button class="quick-card" onclick="scrollToNews()"><div class="quick-icon">📰</div><div class="quick-label">Notícias</div></button>
-        <button class="quick-card" onclick="openEmailModal()"><div class="quick-icon">✉️</div><div class="quick-label">Mensagens</div></button>
-        <a class="quick-card" href="https://web.whatsapp.com" target="_blank" style="text-decoration:none"><div class="quick-icon">💬</div><div class="quick-label">WhatsApp</div></a>
-        <button class="quick-card" onclick="openCursosModal()"><div class="quick-icon">🎓</div><div class="quick-label">Cursos</div></button>
-        <button class="quick-card" onclick="openSkyModal()"><div class="quick-icon">📺</div><div class="quick-label">Sky+</div></button>
-        <button class="quick-card" onclick="openContasModal()"><div class="quick-icon">💰</div><div class="quick-label">Contas</div></button>
-      </div>
-
-      <div class="stats-row" style="margin-top:16px">
-        <div class="stat-card"><div class="stat-label">Contatos</div><div class="stat-value" id="stat-contacts">0</div><div class="stat-sub">salvos</div></div>
-        <div class="stat-card"><div class="stat-label">Hoje</div><div class="stat-value" id="stat-today">0</div><div class="stat-sub">compromissos</div></div>
-        <div class="stat-card"><div class="stat-label">Esta semana</div><div class="stat-value" id="stat-week">0</div><div class="stat-sub">compromissos</div></div>
-        <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" id="stat-events">0</div><div class="stat-sub">compromissos</div></div>
-      </div>
-
-      <div class="card" style="margin-top:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-weight:600">📅 Próximos Compromissos</div>
-          <button class="btn btn-ghost btn-sm" onclick="showPage('calendar')">Ver todos</button>
-        </div>
-        <div id="dash-upcoming"></div>
-      </div>
-
-      <!-- NOTÍCIAS -->
-      <div style="margin-top:28px" id="news-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-family:'DM Serif Display',serif;font-size:20px">📰 Notícias</div>
-          <button class="btn btn-ghost btn-sm" onclick="loadNews()">↺ Atualizar</button>
-        </div>
-        <div class="news-grid" id="news-grid">
-          <div class="news-card">
-            <div class="news-source-header"><span class="news-source-name">G1</span><a class="news-source-link" href="https://g1.globo.com" target="_blank">Ver site ↗</a></div>
-            <div style="padding:16px;color:var(--text3);font-size:13px;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Carregando...</div></div>
-          </div>
-          <div class="news-card">
-            <div class="news-source-header"><span class="news-source-name">UOL</span><a class="news-source-link" href="https://www.uol.com.br" target="_blank">Ver site ↗</a></div>
-            <div style="padding:16px;color:var(--text3);font-size:13px;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Carregando...</div></div>
-          </div>
-          <div class="news-card">
-            <div class="news-source-header"><span class="news-source-name">Folha de S.Paulo</span><a class="news-source-link" href="https://www.folha.uol.com.br" target="_blank">Ver site ↗</a></div>
-            <div style="padding:16px;color:var(--text3);font-size:13px;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Carregando...</div></div>
-          </div>
-        </div>
-        <p style="font-size:11px;color:var(--text3);margin-top:12px;text-align:center">As notícias são carregadas diretamente dos sites. Clique em qualquer título para ler a matéria completa.</p>
-      </div>
-    </div>
-
-    <!-- CONTACTS -->
-    <div class="page" id="page-contacts">
-      <div class="page-header">
-        <div>
-          <div class="page-title">Contatos</div>
-          <div class="page-subtitle" id="contacts-subtitle">0 contatos salvos</div>
-        </div>
-        <button class="btn btn-primary" onclick="openContactModal()">+ Novo Contato</button>
-      </div>
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="contact-search" placeholder="Buscar contatos..." oninput="renderContacts()">
-      </div>
-      <div class="contacts-grid" id="contacts-grid"></div>
-    </div>
-
-    <!-- CALENDAR -->
-
-    <!-- PAGE TAREFAS -->
-    <div class="page" id="page-tasks">
-      <div class="page-header" style="margin-bottom:20px">
-        <div>
-          <div class="page-title">✅ Tarefas</div>
-          <div class="page-subtitle" id="tasks-subtitle">Tarefas por colaborador</div>
-        </div>
-      </div>
-      <div class="tasks-grid" id="tasks-grid"></div>
-    </div>
-
-    <div class="page" id="page-calendar">
-      <div class="page-header">
-        <div>
-          <div class="page-title">Calendário</div>
-          <div class="page-subtitle" id="cal-subtitle">Seus compromissos</div>
-        </div>
-        <button class="btn btn-primary" onclick="openEventModal()">+ Novo Evento</button>
-      </div>
-      <div class="calendar-layout">
-        <div>
-          <div class="card">
-            <div class="mini-cal-header">
-              <button class="mini-cal-nav" onclick="changeMonth(-1)">‹</button>
-              <div class="mini-cal-title" id="mini-cal-title"></div>
-              <button class="mini-cal-nav" onclick="changeMonth(1)">›</button>
-            </div>
-            <div class="cal-grid" id="cal-grid"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div style="font-weight:600" id="events-day-title">Eventos</div>
-          </div>
-          <div id="events-list"></div>
-        </div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<!-- MODAL CONTATO -->
-<div class="modal-bg" id="modal-contact">
-  <div class="modal">
-    <button class="modal-close" onclick="closeContactModal()">✕</button>
-    <h2 id="contact-modal-title">Novo Contato</h2>
-    <div class="form-row">
-      <div class="form-group"><label>Nome *</label><input type="text" id="c-name" placeholder="Nome completo"></div>
-      <div class="form-group"><label>Apelido</label><input type="text" id="c-nick" placeholder="Apelido"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Telefone</label><input type="tel" id="c-phone" placeholder="(00) 00000-0000"></div>
-      <div class="form-group"><label>WhatsApp</label><input type="tel" id="c-whatsapp" placeholder="(00) 00000-0000"></div>
-    </div>
-    <div class="form-group"><label>E-mail</label><input type="email" id="c-email" placeholder="email@exemplo.com"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Categoria</label>
-        <select id="c-category">
-          <option value="personal">Pessoal</option>
-          <option value="work">Trabalho</option>
-          <option value="family">Família</option>
-          <option value="health">Saúde</option>
-          <option value="other">Outro</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Cor do Avatar</label>
-        <select id="c-color">
-          <option value="av-blue">Azul</option>
-          <option value="av-green">Verde</option>
-          <option value="av-amber">Âmbar</option>
-          <option value="av-pink">Rosa</option>
-          <option value="av-purple">Roxo</option>
-          <option value="av-coral">Coral</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group"><label>Endereço</label><input type="text" id="c-address" placeholder="Rua, número, cidade"></div>
-    <div class="form-group"><label>Notas</label><textarea id="c-notes" placeholder="Observações sobre o contato..."></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeContactModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveContact()">Salvar Contato</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL VISUALIZAR CONTATO -->
-<div class="modal-bg" id="modal-view-contact">
-  <div class="modal">
-    <button class="modal-close" onclick="closeViewContactModal()">✕</button>
-    <div id="view-contact-content"></div>
-  </div>
-</div>
-
-<!-- MODAL EVENTO -->
-<div class="modal-bg" id="modal-event">
-  <div class="modal">
-    <button class="modal-close" onclick="closeEventModal()">✕</button>
-    <h2 id="event-modal-title">Novo Evento</h2>
-    <div class="form-group"><label>Título *</label><input type="text" id="e-title" placeholder="Título do evento"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Data *</label><input type="date" id="e-date"></div>
-      <div class="form-group"><label>Hora</label><input type="time" id="e-time"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Categoria</label>
-        <select id="e-category">
-          <option value="work">Trabalho</option>
-          <option value="personal">Pessoal</option>
-          <option value="health">Saúde</option>
-          <option value="other">Outro</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Cor</label>
-        <select id="e-color">
-          <option value="#4C9EFF">Azul</option>
-          <option value="#F0A030">Âmbar</option>
-          <option value="#5aab7a">Verde</option>
-          <option value="#E05555">Vermelho</option>
-          <option value="#9a7ada">Roxo</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group"><label>Local</label><input type="text" id="e-location" placeholder="Local do evento"></div>
-    <div class="form-group"><label>Descrição</label><textarea id="e-desc" placeholder="Detalhes do evento..."></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEvent()">Salvar Evento</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CONFIGURAÇÕES -->
-<div class="popup-modal-bg" id="modal-settings">
-  <div class="popup-modal">
-    <button class="popup-close" onclick="closeSettingsModal()">✕</button>
-    <h2>⚙️ Configurações</h2>
-    <div class="form-group">
-      <label>Nome de exibição</label>
-      <input type="text" id="settings-name" placeholder="Seu nome">
-    </div>
-    <div class="pin-section">
-      <h3>🔑 Alterar PIN</h3>
-      <div class="form-group"><label>PIN atual</label><input type="password" id="settings-old-pin" maxlength="6" placeholder="PIN atual"></div>
-      <div class="form-row">
-        <div class="form-group"><label>Novo PIN</label><input type="password" id="settings-new-pin" maxlength="6" placeholder="Novo PIN"></div>
-        <div class="form-group"><label>Confirmar</label><input type="password" id="settings-confirm-pin" maxlength="6" placeholder="Confirmar"></div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="changePin()" style="width:100%;justify-content:center">Alterar PIN</button>
-    </div>
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Dados da Nuvem</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Exportar JSON</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">📥 Importar JSON</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeSettingsModal()">Fechar</button>
-      <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL MENSAGENS -->
-<div class="popup-modal-bg" id="modal-email">
-  <div class="popup-modal" style="max-width:500px">
-    <button class="popup-close" onclick="closeEmailModal()">✕</button>
-    <h2>✉️ Mensagens</h2>
-    <p style="color:var(--text3);font-size:13px;margin-bottom:16px">Seus serviços de e-mail e mensagens:</p>
-    <div id="email-list"></div>
-    <div class="curso-add-form">
-      <input type="text" id="email-nome-input" placeholder="Nome (ex: Gmail, Outlook...)">
-      <input type="url"  id="email-url-input"  placeholder="https://...">
-      <button class="btn btn-primary btn-sm" onclick="addEmailLink()">+ Adicionar</button>
-    </div>
-    <div style="margin-top:16px;text-align:right">
-      <button class="btn btn-ghost" onclick="closeEmailModal()">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CURSOS -->
-<div class="popup-modal-bg" id="modal-cursos">
-  <div class="popup-modal" style="max-width:500px">
-    <button class="popup-close" onclick="closeCursosModal()">✕</button>
-    <h2>🎓 Cursos</h2>
-    <p style="color:var(--text3);font-size:13px;margin-bottom:16px">Seus cursos e plataformas de ensino:</p>
-    <div id="cursos-list"></div>
-    <div class="curso-add-form">
-      <input type="text" id="curso-nome-input" placeholder="Nome do curso / plataforma">
-      <input type="url" id="curso-url-input" placeholder="https://...">
-      <button class="btn btn-primary btn-sm" onclick="addCurso()">+ Adicionar</button>
-    </div>
-    <div style="margin-top:16px;text-align:right">
-      <button class="btn btn-ghost" onclick="closeCursosModal()">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL SKY+ -->
-<div class="popup-modal-bg" id="modal-sky">
-  <div class="popup-modal" style="max-width:480px">
-    <button class="popup-close" onclick="closeSkyModal()">✕</button>
-    <h2>📺 Sky+</h2>
-    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">Acesse seus serviços de streaming:</p>
-    <div style="display:grid;gap:10px">
-      <a href="https://www.sky.com.br/skyplay" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">📺</span><div><div style="font-weight:600">Sky Play</div><div style="font-size:12px;color:var(--text3)">sky.com.br/skyplay</div></div>
-      </a>
-      <a href="https://www.netflix.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🎬</span><div><div style="font-weight:600">Netflix</div><div style="font-size:12px;color:var(--text3)">netflix.com</div></div>
-      </a>
-      <a href="https://www.primevideo.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🎥</span><div><div style="font-weight:600">Prime Video</div><div style="font-size:12px;color:var(--text3)">primevideo.com</div></div>
-      </a>
-      <a href="https://www.globoplay.globo.com" target="_blank" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;padding:14px 16px">
-        <span style="font-size:22px">🌐</span><div><div style="font-weight:600">Globoplay</div><div style="font-size:12px;color:var(--text3)">globoplay.globo.com</div></div>
-      </a>
-    </div>
-    <div style="margin-top:16px;text-align:right">
-      <button class="btn btn-ghost" onclick="closeSkyModal()">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CONTAS -->
-<div class="popup-modal-bg" id="modal-contas">
-  <div class="popup-modal" style="max-width:560px">
-    <button class="popup-close" onclick="closeContasModal()">✕</button>
-    <h2>💰 Contas</h2>
-    <div class="contas-tabs">
-      <button class="contas-tab active" id="tab-receber" onclick="switchContasTab('receber')">📥 Contas a Receber</button>
-      <button class="contas-tab"        id="tab-pagar"   onclick="switchContasTab('pagar')">📤 Contas a Pagar</button>
-    </div>
-    <!-- RECEBER -->
-    <div class="contas-panel active" id="panel-receber">
-      <div id="lista-receber"></div>
-      <div class="conta-add-form">
-        <input type="text"   id="rec-desc"  placeholder="Descrição">
-        <input type="number" id="rec-valor" placeholder="R$ 0,00" min="0" step="0.01">
-        <input type="date"   id="rec-venc">
-        <button class="btn btn-primary btn-sm" onclick="addConta('receber')">+</button>
-      </div>
-      <div class="conta-total" id="total-receber"></div>
-    </div>
-    <!-- PAGAR -->
-    <div class="contas-panel" id="panel-pagar">
-      <div id="lista-pagar"></div>
-      <div class="conta-add-form">
-        <input type="text"   id="pag-desc"  placeholder="Descrição">
-        <input type="number" id="pag-valor" placeholder="R$ 0,00" min="0" step="0.01">
-        <input type="date"   id="pag-venc">
-        <button class="btn btn-primary btn-sm" onclick="addConta('pagar')">+</button>
-      </div>
-      <div class="conta-total" id="total-pagar"></div>
-    </div>
-    <div style="margin-top:16px;text-align:right">
-      <button class="btn btn-ghost" onclick="closeContasModal()">Fechar</button>
-    </div>
-  </div>
-</div>
-
-
-<script>
-// ============================================================
-// STORAGE NA NUVEM (window.storage do Claude Artifact)
-// ============================================================
-const STORAGE_KEYS = {
-  contacts: 'agenda_contacts',
-  events: 'agenda_events',
-  settings: 'agenda_settings'
-};
-
-let db = {
-  contacts: [],
-  events: [],
-  settings: { name: 'Minha Agenda', pin: '1234' }
-};
-
-let editingContactId = null;
-let editingEventId = null;
-let calYear, calMonth, selectedDate;
-
-// Sincronização
-async function loadFromCloud() {
-  setSyncStatus('syncing', 'Sincronizando...');
-  try {
-    const [contactsResult, eventsResult, settingsResult] = await Promise.all([
-      safeGet(STORAGE_KEYS.contacts),
-      safeGet(STORAGE_KEYS.events),
-      safeGet(STORAGE_KEYS.settings)
-    ]);
-    if (contactsResult) db.contacts = JSON.parse(contactsResult);
-    if (eventsResult) db.events = JSON.parse(eventsResult);
-    if (settingsResult) db.settings = { ...db.settings, ...JSON.parse(settingsResult) };
-    setSyncStatus('synced', 'Sincronizado');
-    return true;
-  } catch (e) {
-    setSyncStatus('error', 'Erro ao carregar');
-    return false;
-  }
-}
-
-async function saveToCloud(key, data) {
-  setSyncStatus('syncing', 'Salvando...');
-  try {
-    await window.storage.set(key, JSON.stringify(data));
-    setSyncStatus('synced', 'Salvo na nuvem ✓');
-    setTimeout(() => setSyncStatus('synced', 'Sincronizado'), 2000);
-  } catch (e) {
-    // Fallback para localStorage se storage não disponível
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
-    setSyncStatus('error', 'Modo offline');
-  }
-}
-
-async function safeGet(key) {
-  try {
-    const result = await window.storage.get(key);
-    return result ? result.value : null;
-  } catch (e) {
-    // Fallback localStorage
-    try { return localStorage.getItem(key); } catch { return null; }
-  }
-}
-
-function setSyncStatus(state, text) {
-  const dot = document.getElementById('sync-dot');
-  const txt = document.getElementById('sync-text');
-  dot.className = 'sync-dot ' + state;
-  txt.textContent = text;
-}
-
-// ============================================================
-// LOCK SCREEN
-// ============================================================
-function tryUnlock() {
-  const input = document.getElementById('lock-pin-input').value;
-  if (input === db.settings.pin) {
-    document.getElementById('lock-screen').style.display = 'none';
-    init();
-  } else {
-    document.getElementById('lock-error').textContent = 'PIN incorreto. Tente novamente.';
-    document.getElementById('lock-pin-input').value = '';
-  }
-}
-
-function clearLockError() {
-  document.getElementById('lock-error').textContent = '';
-}
-
-// ============================================================
-
-// ============================================================
-// TAREFAS
-// ============================================================
-const TASK_PEOPLE = [
-  { id:'marco',    name:'Marco',    color:'av-blue'   },
-  { id:'lucas',    name:'Lucas',    color:'av-green'  },
-  { id:'anderson', name:'Anderson', color:'av-amber'  },
-  { id:'torres',   name:'Torres',   color:'av-coral'  },
-  { id:'mauricio', name:'Maurício', color:'av-purple' },
-];
-
-function getTaskData() {
-  try { return JSON.parse(localStorage.getItem('agenda_tasks_v2') || '{}'); } catch(e) { return {}; }
-}
-function saveTaskData(d) { localStorage.setItem('agenda_tasks_v2', JSON.stringify(d)); }
-
-function renderTasks() {
-  var grid = document.getElementById('tasks-grid');
-  if (!grid) return;
-  var data = getTaskData();
-  grid.innerHTML = '';
-  TASK_PEOPLE.forEach(function(p) {
-    var items = data[p.id] || [];
-    var card = document.createElement('div');
-    card.className = 'task-card';
-
-    var inits = p.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
-    var header = document.createElement('div');
-    header.className = 'task-card-header';
-    header.innerHTML = '<div class="task-avatar ' + p.color + '">' + inits + '</div>'
-      + '<div class="task-person-name">' + p.name + '</div>';
-    card.appendChild(header);
-
-    var ul = document.createElement('ul');
-    ul.className = 'task-list';
-    if (!items.length) {
-      var empty = document.createElement('li');
-      empty.className = 'task-empty';
-      empty.textContent = 'Nenhuma tarefa ainda.';
-      ul.appendChild(empty);
-    } else {
-      items.forEach(function(t, i) {
-        var li = document.createElement('li');
-        li.className = 'task-item';
-
-        var cb = document.createElement('input');
-        cb.type = 'checkbox'; cb.className = 'task-cb'; cb.checked = !!t.done;
-        cb.dataset.pid = p.id; cb.dataset.idx = i;
-        cb.addEventListener('change', function() {
-          var d = getTaskData();
-          if (d[this.dataset.pid] && d[this.dataset.pid][parseInt(this.dataset.idx)] !== undefined)
-            d[this.dataset.pid][parseInt(this.dataset.idx)].done = this.checked;
-          saveTaskData(d); renderTasks();
-        });
-
-        var sp = document.createElement('span');
-        sp.className = 'task-text' + (t.done ? ' done' : '');
-        sp.textContent = t.text;
-
-        var del = document.createElement('button');
-        del.className = 'task-del'; del.textContent = '✕'; del.title = 'Remover';
-        del.dataset.pid = p.id; del.dataset.idx = i;
-        del.addEventListener('click', function() {
-          var d = getTaskData();
-          if (d[this.dataset.pid]) d[this.dataset.pid].splice(parseInt(this.dataset.idx), 1);
-          saveTaskData(d); renderTasks();
-        });
-
-        li.appendChild(cb); li.appendChild(sp); li.appendChild(del);
-        ul.appendChild(li);
-      });
-    }
-    card.appendChild(ul);
-
-    var row = document.createElement('div');
-    row.className = 'task-add-row';
-    var inp = document.createElement('input');
-    inp.type = 'text'; inp.placeholder = 'Nova tarefa...'; inp.dataset.pid = p.id;
-    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') addTask(this.dataset.pid, this); });
-    var btn = document.createElement('button');
-    btn.className = 'btn btn-primary btn-sm'; btn.textContent = '+';
-    btn.dataset.pid = p.id;
-    btn.addEventListener('click', function() {
-      var input = this.previousSibling;
-      addTask(this.dataset.pid, input);
-    });
-    row.appendChild(inp); row.appendChild(btn);
-    card.appendChild(row);
-    grid.appendChild(card);
-  });
-}
-
-function addTask(pid, inputEl) {
-  var text = inputEl.value.trim();
-  if (!text) return;
-  var d = getTaskData();
-  if (!d[pid]) d[pid] = [];
-  d[pid].push({ text: text, done: false });
-  saveTaskData(d);
-  inputEl.value = '';
-  renderTasks();
-}
-
-// ============================================================
-// CURSOS (editável)
-// ============================================================
-const DEFAULT_CURSOS = [
-  { nome:'Coursera', url:'https://www.coursera.org',   icon:'🎓' },
-  { nome:'Udemy',    url:'https://www.udemy.com',      icon:'📚' },
-  { nome:'YouTube',  url:'https://www.youtube.com',    icon:'▶️' },
-  { nome:'Alura',    url:'https://www.alura.com.br',   icon:'🚀' },
-];
-
-function getCursos() {
-  try {
-    var s = localStorage.getItem('agenda_cursos');
-    return s ? JSON.parse(s) : DEFAULT_CURSOS.slice();
-  } catch(e) { return DEFAULT_CURSOS.slice(); }
-}
-function saveCursos(list) { localStorage.setItem('agenda_cursos', JSON.stringify(list)); }
-
-function renderCursos() {
-  var container = document.getElementById('cursos-list');
-  if (!container) return;
-  var list = getCursos();
-  container.innerHTML = '';
-  if (!list.length) {
-    container.innerHTML = '<p style="font-size:13px;color:var(--text3)">Nenhum curso cadastrado.</p>';
-    return;
-  }
-  list.forEach(function(c, i) {
-    var div = document.createElement('div');
-    div.className = 'curso-item';
-    var icon = document.createElement('span');
-    icon.className = 'curso-icon'; icon.textContent = c.icon || '🎓';
-    var info = document.createElement('div');
-    info.className = 'curso-info';
-    info.innerHTML = '<div class="curso-name"><a href="' + c.url + '" target="_blank" style="color:var(--text);text-decoration:none">' + c.nome + '</a></div>'
-      + '<div class="curso-url">' + c.url + '</div>';
-    var del = document.createElement('button');
-    del.className = 'curso-del'; del.textContent = '✕'; del.title = 'Remover';
-    del.dataset.idx = i;
-    del.addEventListener('click', function() {
-      var l = getCursos(); l.splice(parseInt(this.dataset.idx), 1); saveCursos(l); renderCursos();
-    });
-    div.appendChild(icon); div.appendChild(info); div.appendChild(del);
-    container.appendChild(div);
-  });
-}
-
-function addCurso() {
-  var nome = document.getElementById('curso-nome-input').value.trim();
-  var url  = document.getElementById('curso-url-input').value.trim();
-  if (!nome) { alert('Informe o nome do curso.'); return; }
-  if (!url)  { alert('Informe a URL.'); return; }
-  if (!url.startsWith('http')) url = 'https://' + url;
-  var list = getCursos();
-  list.push({ nome: nome, url: url, icon: '🎓' });
-  saveCursos(list);
-  document.getElementById('curso-nome-input').value = '';
-  document.getElementById('curso-url-input').value = '';
-  renderCursos();
-}
-
-function openCursosModal() {
-  renderCursos();
-  document.getElementById('modal-cursos').classList.add('open');
-}
-function closeCursosModal() { document.getElementById('modal-cursos').classList.remove('open'); }
-
-// ============================================================
-// CONTAS RECEBER / PAGAR
-// ============================================================
-function getContas(tipo) {
-  try { return JSON.parse(localStorage.getItem('agenda_contas_' + tipo) || '[]'); } catch(e) { return []; }
-}
-function saveContas(tipo, list) { localStorage.setItem('agenda_contas_' + tipo, JSON.stringify(list)); }
-
-function switchContasTab(tab) {
-  document.getElementById('tab-receber').classList.toggle('active', tab === 'receber');
-  document.getElementById('tab-pagar').classList.toggle('active', tab === 'pagar');
-  document.getElementById('panel-receber').classList.toggle('active', tab === 'receber');
-  document.getElementById('panel-pagar').classList.toggle('active', tab === 'pagar');
-}
-
-function renderContas(tipo) {
-  var list = getContas(tipo);
-  var container = document.getElementById('lista-' + tipo);
-  var totalEl   = document.getElementById('total-' + tipo);
-  if (!container) return;
-  container.innerHTML = '';
-  if (!list.length) {
-    container.innerHTML = '<p style="font-size:13px;color:var(--text3);padding:8px 0">Nenhuma conta cadastrada.</p>';
-    if (totalEl) totalEl.textContent = '';
-    return;
-  }
-  var total = 0;
-  list.forEach(function(c, i) {
-    total += parseFloat(c.valor) || 0;
-    var row = document.createElement('div');
-    row.className = 'conta-row';
-    var desc = document.createElement('span'); desc.className = 'conta-desc'; desc.textContent = c.desc;
-    var valor = document.createElement('span'); valor.className = 'conta-valor';
-    valor.textContent = 'R$ ' + parseFloat(c.valor).toFixed(2).replace('.',',');
-    var venc = document.createElement('span'); venc.className = 'conta-venc';
-    venc.textContent = c.venc ? new Date(c.venc + 'T00:00:00').toLocaleDateString('pt-BR') : '';
-    var del = document.createElement('button'); del.className = 'conta-del'; del.textContent = '✕';
-    del.dataset.tipo = tipo; del.dataset.idx = i;
-    del.addEventListener('click', function() {
-      var l = getContas(this.dataset.tipo); l.splice(parseInt(this.dataset.idx), 1);
-      saveContas(this.dataset.tipo, l); renderContas(this.dataset.tipo);
-    });
-    row.appendChild(desc); row.appendChild(venc); row.appendChild(valor); row.appendChild(del);
-    container.appendChild(row);
-  });
-  if (totalEl) totalEl.textContent = 'Total: R$ ' + total.toFixed(2).replace('.',',');
-}
-
-function addConta(tipo) {
-  var desc  = document.getElementById(tipo === 'receber' ? 'rec-desc'  : 'pag-desc').value.trim();
-  var valor = document.getElementById(tipo === 'receber' ? 'rec-valor' : 'pag-valor').value;
-  var venc  = document.getElementById(tipo === 'receber' ? 'rec-venc'  : 'pag-venc').value;
-  if (!desc) { alert('Informe a descrição.'); return; }
-  var list = getContas(tipo);
-  list.push({ desc: desc, valor: parseFloat(valor) || 0, venc: venc });
-  saveContas(tipo, list);
-  document.getElementById(tipo === 'receber' ? 'rec-desc'  : 'pag-desc').value = '';
-  document.getElementById(tipo === 'receber' ? 'rec-valor' : 'pag-valor').value = '';
-  document.getElementById(tipo === 'receber' ? 'rec-venc'  : 'pag-venc').value = '';
-  renderContas(tipo);
-}
-
-function openContasModal() {
-  renderContas('receber');
-  renderContas('pagar');
-  switchContasTab('receber');
-  document.getElementById('modal-contas').classList.add('open');
-}
-function closeContasModal() { document.getElementById('modal-contas').classList.remove('open'); }
-
-
-// INIT
-// ============================================================
-async function init() {
-  await loadFromCloud();
-  updateProfileName();
-  // Restaurar foto de perfil se salva
-  if (db.settings.photo) {
-    document.getElementById('profile-photo-img').src = db.settings.photo;
-  }
-  renderDashboard();
-  renderContacts();
-  const now = new Date();
-  calYear = now.getFullYear();
-  calMonth = now.getMonth();
-  selectedDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  renderCalendar();
-  renderEventsList();
-  updateBadges();
-  loadNews();
-}
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  const nb = document.getElementById('nav-' + id);
-  if (nb) nb.classList.add('active');
-  if (id === 'tasks') renderTasks();
-  closeMobileMenu();
-}
-
-function toggleMobileMenu() {
-  document.getElementById('sidebar').classList.toggle('mobile-open');
-}
-function closeMobileMenu() {
-  document.getElementById('sidebar').classList.remove('mobile-open');
-}
-function closeMobileMenuOnClick(e) {
-  if (document.getElementById('sidebar').classList.contains('mobile-open')) {
-    closeMobileMenu();
-  }
-}
-
-// ============================================================
-// DASHBOARD
-// ============================================================
-function renderDashboard() {
-  const now = new Date();
-  const h = now.getHours();
-  let greeting = h < 12 ? 'Bom dia! 👋' : h < 18 ? 'Boa tarde! 👋' : 'Boa noite! 👋';
-  document.getElementById('dash-greeting').textContent = greeting;
-  const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  document.getElementById('dash-date-sub').textContent = `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
-
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
-  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-
-  const todayEvents = db.events.filter(e => e.date === todayStr);
-  const weekEvents = db.events.filter(e => { const d = new Date(e.date + 'T12:00:00'); return d >= weekStart && d <= weekEnd; });
-
-  document.getElementById('stat-contacts').textContent = db.contacts.length;
-  document.getElementById('stat-today').textContent = todayEvents.length;
-  document.getElementById('stat-week').textContent = weekEvents.length;
-  document.getElementById('stat-events').textContent = db.events.length;
-
-  // Próximos eventos
-  const upcoming = db.events.filter(e => e.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||'')).slice(0,5);
-  const el = document.getElementById('dash-upcoming');
-  if (!upcoming.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div>Nenhum compromisso próximo</div></div>';
-  } else {
-    el.innerHTML = upcoming.map(e => `
-      <div class="event-item">
-        <div class="event-time">${e.time||'—'}</div>
-        <div class="event-dot" style="background:${e.color||'var(--accent)'}"></div>
-        <div class="event-body">
-          <div class="event-title">${e.title}</div>
-          <div class="event-desc">${formatDate(e.date)}${e.location ? ' · ' + e.location : ''}</div>
-          <div class="event-tags"><span class="tag tag-${e.category||'other'}">${catLabel(e.category)}</span></div>
-        </div>
-        <button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">🗑</button>
-      </div>`).join('');
-  }
-}
-
-// ============================================================
-// CONTACTS
-// ============================================================
-const avatarColors = ['av-blue','av-green','av-amber','av-pink','av-purple','av-coral'];
-
-function renderContacts() {
-  const q = (document.getElementById('contact-search')?.value||'').toLowerCase();
-  let list = db.contacts;
-  if (q) list = list.filter(c => (c.name+c.email+c.phone+c.category).toLowerCase().includes(q));
-  list = list.slice().sort((a,b) => a.name.localeCompare(b.name));
-
-  document.getElementById('contacts-subtitle').textContent = `${db.contacts.length} contato${db.contacts.length!==1?'s':''} salvo${db.contacts.length!==1?'s':''}`;
-
-  const grid = document.getElementById('contacts-grid');
-  if (!list.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👤</div><div>' + (q ? 'Nenhum contato encontrado' : 'Nenhum contato ainda') + '</div></div>';
-    return;
-  }
-  grid.innerHTML = list.map(c => `
-    <div class="contact-card" onclick="viewContact('${c.id}')">
-      <div class="contact-avatar ${c.color||'av-blue'}">${(c.name||'?')[0].toUpperCase()}</div>
-      <div class="contact-name">${c.name}</div>
-      <div class="contact-role">${c.nick ? c.nick + ' · ' : ''}${catLabel(c.category)}</div>
-      <div class="contact-info">
-        ${c.phone ? `<span>📞 ${c.phone}</span>` : ''}
-        ${c.whatsapp ? `<span>💬 ${c.whatsapp}</span>` : ''}
-        ${c.email ? `<span>✉️ ${c.email}</span>` : ''}
-      </div>
-      <div class="contact-actions">
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editContact('${c.id}')">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteContact('${c.id}')">🗑</button>
-      </div>
-    </div>`).join('');
-}
-
-function openContactModal(id) {
-  editingContactId = null;
-  document.getElementById('contact-modal-title').textContent = 'Novo Contato';
-  ['c-name','c-nick','c-phone','c-whatsapp','c-email','c-address','c-notes'].forEach(f => document.getElementById(f).value = '');
-  document.getElementById('c-category').value = 'personal';
-  document.getElementById('c-color').value = 'av-blue';
-  document.getElementById('modal-contact').classList.add('open');
-  setTimeout(() => document.getElementById('c-name').focus(), 100);
-}
-
-function editContact(id) {
-  const c = db.contacts.find(x => x.id === id);
-  if (!c) return;
-  editingContactId = id;
-  document.getElementById('contact-modal-title').textContent = 'Editar Contato';
-  document.getElementById('c-name').value = c.name||'';
-  document.getElementById('c-nick').value = c.nick||'';
-  document.getElementById('c-phone').value = c.phone||'';
-  document.getElementById('c-whatsapp').value = c.whatsapp||'';
-  document.getElementById('c-email').value = c.email||'';
-  document.getElementById('c-address').value = c.address||'';
-  document.getElementById('c-notes').value = c.notes||'';
-  document.getElementById('c-category').value = c.category||'personal';
-  document.getElementById('c-color').value = c.color||'av-blue';
-  document.getElementById('modal-contact').classList.add('open');
-}
-
-function closeContactModal() { document.getElementById('modal-contact').classList.remove('open'); }
-
-async function saveContact() {
-  const name = document.getElementById('c-name').value.trim();
-  if (!name) { showToast('Nome é obrigatório', 'error'); return; }
-  const contact = {
-    id: editingContactId || Date.now().toString(),
-    name, nick: document.getElementById('c-nick').value.trim(),
-    phone: document.getElementById('c-phone').value.trim(),
-    whatsapp: document.getElementById('c-whatsapp').value.trim(),
-    email: document.getElementById('c-email').value.trim(),
-    address: document.getElementById('c-address').value.trim(),
-    notes: document.getElementById('c-notes').value.trim(),
-    category: document.getElementById('c-category').value,
-    color: document.getElementById('c-color').value,
-    createdAt: editingContactId ? (db.contacts.find(c=>c.id===editingContactId)?.createdAt||Date.now()) : Date.now()
-  };
-  if (editingContactId) {
-    db.contacts = db.contacts.map(c => c.id === editingContactId ? contact : c);
-  } else {
-    db.contacts.push(contact);
-  }
-  await saveToCloud(STORAGE_KEYS.contacts, db.contacts);
-  closeContactModal();
-  renderContacts();
-  updateBadges();
-  renderDashboard();
-  showToast(editingContactId ? 'Contato atualizado!' : 'Contato salvo!', 'success');
-}
-
-async function deleteContact(id) {
-  if (!confirm('Excluir este contato?')) return;
-  db.contacts = db.contacts.filter(c => c.id !== id);
-  await saveToCloud(STORAGE_KEYS.contacts, db.contacts);
-  renderContacts();
-  updateBadges();
-  renderDashboard();
-  showToast('Contato excluído');
-}
-
-function viewContact(id) {
-  const c = db.contacts.find(x => x.id === id);
-  if (!c) return;
-  document.getElementById('view-contact-content').innerHTML = `
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-      <div class="contact-avatar ${c.color||'av-blue'}" style="width:64px;height:64px;font-size:24px">${(c.name||'?')[0].toUpperCase()}</div>
-      <div><div style="font-family:'DM Serif Display',serif;font-size:22px">${c.name}</div><div style="color:var(--text3);font-size:13px">${catLabel(c.category)}</div></div>
-    </div>
-    <div style="display:grid;gap:10px">
-      ${c.nick ? `<div style="display:flex;gap:8px"><span style="color:var(--text3);width:80px">Apelido</span><span>${c.nick}</span></div>` : ''}
-      ${c.phone ? `<div style="display:flex;gap:8px"><span style="color:var(--text3);width:80px">Telefone</span><a href="tel:${c.phone}" style="color:var(--accent)">${c.phone}</a></div>` : ''}
-      ${c.whatsapp ? `<div style="display:flex;gap:8px"><span style="color:var(--text3);width:80px">WhatsApp</span><a href="https://wa.me/55${c.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:var(--accent)">${c.whatsapp}</a></div>` : ''}
-      ${c.email ? `<div style="display:flex;gap:8px"><span style="color:var(--text3);width:80px">E-mail</span><a href="mailto:${c.email}" style="color:var(--accent)">${c.email}</a></div>` : ''}
-      ${c.address ? `<div style="display:flex;gap:8px"><span style="color:var(--text3);width:80px">Endereço</span><span>${c.address}</span></div>` : ''}
-      ${c.notes ? `<div style="margin-top:8px;padding-top:12px;border-top:1px solid var(--border)"><div style="color:var(--text3);font-size:12px;margin-bottom:4px">NOTAS</div><div style="font-size:14px;color:var(--text2)">${c.notes}</div></div>` : ''}
-    </div>
-    <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn btn-ghost btn-sm" onclick="closeViewContactModal();editContact('${c.id}')">✏️ Editar</button>
-      <button class="btn btn-danger btn-sm" onclick="closeViewContactModal();deleteContact('${c.id}')">🗑 Excluir</button>
-    </div>`;
-  document.getElementById('modal-view-contact').classList.add('open');
-}
-
-function closeViewContactModal() { document.getElementById('modal-view-contact').classList.remove('open'); }
-
-// ============================================================
-// CALENDAR & EVENTS
-// ============================================================
-function renderCalendar() {
-  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  document.getElementById('mini-cal-title').textContent = `${months[calMonth]} ${calYear}`;
-
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const todayStr = getTodayStr();
-  const eventDates = new Set(db.events.map(e => e.date));
-
-  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => `<div class="cal-day-name">${d}</div>`).join('');
-  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    let cls = 'cal-day';
-    if (ds === todayStr) cls += ' today';
-    if (ds === selectedDate) cls += ' selected';
-    if (eventDates.has(ds)) cls += ' has-event';
-    html += `<div class="${cls}" onclick="selectDate('${ds}')">${d}</div>`;
-  }
-  document.getElementById('cal-grid').innerHTML = html;
-}
-
-function selectDate(ds) {
-  selectedDate = ds;
-  renderCalendar();
-  renderEventsList();
-}
-
-function changeMonth(dir) {
-  calMonth += dir;
-  if (calMonth < 0) { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  renderCalendar();
-}
-
-function renderEventsList() {
-  const events = db.events.filter(e => e.date === selectedDate).sort((a,b) => (a.time||'').localeCompare(b.time||''));
-  document.getElementById('events-day-title').textContent = selectedDate ? `Eventos — ${formatDate(selectedDate)}` : 'Eventos';
-  const el = document.getElementById('events-list');
-  if (!events.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div>Sem eventos neste dia</div></div>';
-    return;
-  }
-  el.innerHTML = events.map(e => `
-    <div class="event-item">
-      <div class="event-time">${e.time||'—'}</div>
-      <div class="event-dot" style="background:${e.color||'var(--accent)'}"></div>
-      <div class="event-body">
-        <div class="event-title">${e.title}</div>
-        ${e.desc ? `<div class="event-desc">${e.desc}</div>` : ''}
-        ${e.location ? `<div class="event-desc">📍 ${e.location}</div>` : ''}
-        <div class="event-tags"><span class="tag tag-${e.category||'other'}">${catLabel(e.category)}</span></div>
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">🗑</button>
-    </div>`).join('');
-}
-
-function openEventModal() {
-  editingEventId = null;
-  document.getElementById('event-modal-title').textContent = 'Novo Evento';
-  document.getElementById('e-title').value = '';
-  document.getElementById('e-date').value = selectedDate || getTodayStr();
-  document.getElementById('e-time').value = '';
-  document.getElementById('e-location').value = '';
-  document.getElementById('e-desc').value = '';
-  document.getElementById('e-category').value = 'personal';
-  document.getElementById('e-color').value = '#4C9EFF';
-  document.getElementById('modal-event').classList.add('open');
-  setTimeout(() => document.getElementById('e-title').focus(), 100);
-}
-
-function closeEventModal() { document.getElementById('modal-event').classList.remove('open'); }
-
-async function saveEvent() {
-  const title = document.getElementById('e-title').value.trim();
-  const date = document.getElementById('e-date').value;
-  if (!title) { showToast('Título é obrigatório', 'error'); return; }
-  if (!date) { showToast('Data é obrigatória', 'error'); return; }
-  const ev = {
-    id: editingEventId || Date.now().toString(),
-    title, date, time: document.getElementById('e-time').value,
-    location: document.getElementById('e-location').value.trim(),
-    desc: document.getElementById('e-desc').value.trim(),
-    category: document.getElementById('e-category').value,
-    color: document.getElementById('e-color').value
-  };
-  if (editingEventId) {
-    db.events = db.events.map(e => e.id === editingEventId ? ev : e);
-  } else {
-    db.events.push(ev);
-  }
-  await saveToCloud(STORAGE_KEYS.events, db.events);
-  closeEventModal();
-  renderCalendar();
-  renderEventsList();
-  updateBadges();
-  renderDashboard();
-  showToast(editingEventId ? 'Evento atualizado!' : 'Evento salvo!', 'success');
-}
-
-async function deleteEvent(id) {
-  if (!confirm('Excluir este evento?')) return;
-  db.events = db.events.filter(e => e.id !== id);
-  await saveToCloud(STORAGE_KEYS.events, db.events);
-  renderCalendar();
-  renderEventsList();
-  updateBadges();
-  renderDashboard();
-  showToast('Evento excluído');
-}
-
-// ============================================================
-// SETTINGS
-// ============================================================
-function openSettingsModal() {
-  document.getElementById('settings-name').value = db.settings.name || '';
-  document.getElementById('settings-old-pin').value = '';
-  document.getElementById('settings-new-pin').value = '';
-  document.getElementById('settings-confirm-pin').value = '';
-  document.getElementById('modal-settings').classList.add('open');
-}
-function closeSettingsModal() { document.getElementById('modal-settings').classList.remove('open'); }
-
-async function saveSettings() {
-  const name = document.getElementById('settings-name').value.trim();
-  if (name) db.settings.name = name;
-  await saveToCloud(STORAGE_KEYS.settings, db.settings);
-  updateProfileName();
-  closeSettingsModal();
-  showToast('Configurações salvas!', 'success');
-}
-
-async function changePin() {
-  const oldPin = document.getElementById('settings-old-pin').value;
-  const newPin = document.getElementById('settings-new-pin').value;
-  const confirmPin = document.getElementById('settings-confirm-pin').value;
-  if (oldPin !== db.settings.pin) { showToast('PIN atual incorreto', 'error'); return; }
-  if (!newPin || newPin.length < 4) { showToast('PIN deve ter ao menos 4 dígitos', 'error'); return; }
-  if (newPin !== confirmPin) { showToast('PINs não coincidem', 'error'); return; }
-  db.settings.pin = newPin;
-  await saveToCloud(STORAGE_KEYS.settings, db.settings);
-  showToast('PIN alterado com sucesso!', 'success');
-}
-
-function updateProfileName() {
-  document.getElementById('profile-name-display').textContent = db.settings.name || 'Minha Agenda';
-}
-
-function updateProfilePhoto(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async e => {
-    document.getElementById('profile-photo-img').src = e.target.result;
-    db.settings.photo = e.target.result;
-    await saveToCloud(STORAGE_KEYS.settings, db.settings);
-    showToast('Foto atualizada!', 'success');
-  };
-  reader.readAsDataURL(file);
-}
-
-// ============================================================
-// MODAIS DE ACESSO RÁPIDO
-// ============================================================
-// ── EMAIL / MENSAGENS (editável) ──────────────────────────────────────────
-const DEFAULT_EMAILS = [
-  { nome:'Gmail',         url:'https://mail.google.com',   icon:'📧' },
-  { nome:'Outlook',       url:'https://outlook.live.com',  icon:'📨' },
-  { nome:'WhatsApp Web',  url:'https://web.whatsapp.com',  icon:'💬' },
-  { nome:'Telegram',      url:'https://telegram.org',      icon:'✈️' },
-];
-
-function getEmailLinks() {
-  try {
-    var s = localStorage.getItem('agenda_email_links');
-    return s ? JSON.parse(s) : DEFAULT_EMAILS.slice();
-  } catch(e) { return DEFAULT_EMAILS.slice(); }
-}
-function saveEmailLinks(list) { localStorage.setItem('agenda_email_links', JSON.stringify(list)); }
-
-function renderEmailLinks() {
-  var container = document.getElementById('email-list');
-  if (!container) return;
-  var list = getEmailLinks();
-  container.innerHTML = '';
-  if (!list.length) {
-    container.innerHTML = '<p style="font-size:13px;color:var(--text3);margin-bottom:8px">Nenhum link cadastrado.</p>';
-    return;
-  }
-  list.forEach(function(c, i) {
-    var div = document.createElement('div');
-    div.className = 'curso-item';
-
-    var icon = document.createElement('span');
-    icon.className = 'curso-icon'; icon.textContent = c.icon || '✉️';
-
-    var info = document.createElement('div');
-    info.className = 'curso-info';
-    info.innerHTML = '<div class="curso-name">'
-      + '<a href="' + c.url + '" target="_blank" style="color:var(--text);text-decoration:none">' + c.nome + '</a>'
-      + '</div><div class="curso-url">' + c.url + '</div>';
-
-    var del = document.createElement('button');
-    del.className = 'curso-del'; del.textContent = '✕'; del.title = 'Remover';
-    del.dataset.idx = i;
-    del.addEventListener('click', function() {
-      var l = getEmailLinks(); l.splice(parseInt(this.dataset.idx), 1);
-      saveEmailLinks(l); renderEmailLinks();
-    });
-
-    div.appendChild(icon); div.appendChild(info); div.appendChild(del);
-    container.appendChild(div);
-  });
-}
-
-function addEmailLink() {
-  var nome = document.getElementById('email-nome-input').value.trim();
-  var url  = document.getElementById('email-url-input').value.trim();
-  if (!nome) { alert('Informe o nome do serviço.'); return; }
-  if (!url)  { alert('Informe a URL.'); return; }
-  if (!url.startsWith('http')) url = 'https://' + url;
-  var list = getEmailLinks();
-  list.push({ nome: nome, url: url, icon: '✉️' });
-  saveEmailLinks(list);
-  document.getElementById('email-nome-input').value = '';
-  document.getElementById('email-url-input').value = '';
-  renderEmailLinks();
-}
-
-function openEmailModal() {
-  renderEmailLinks();
-  document.getElementById('modal-email').classList.add('open');
-}
-function closeEmailModal() { document.getElementById('modal-email').classList.remove('open'); }
-function openCursosModal() { document.getElementById('modal-cursos').classList.add('open'); }
-function closeCursosModal() { document.getElementById('modal-cursos').classList.remove('open'); }
-function openSkyModal() { document.getElementById('modal-sky').classList.add('open'); }
-function closeSkyModal() { document.getElementById('modal-sky').classList.remove('open'); }
-function openContasModal() { document.getElementById('modal-contas').classList.add('open'); }
-function closeContasModal() { document.getElementById('modal-contas').classList.remove('open'); }
-
-// ============================================================
-// NOTÍCIAS (via RSS2JSON proxy público)
-// ============================================================
-function scrollToNews() {
-  const el = document.getElementById('news-section');
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-
-async function loadNews() {
-  const sources = [
-    { id: 'news-g1', name: 'G1', url: 'https://g1.globo.com/rss/g1/', site: 'https://g1.globo.com' },
-    { id: 'news-uol', name: 'UOL', url: 'https://rss.uol.com.br/feed/noticias.xml', site: 'https://www.uol.com.br' },
-    { id: 'news-folha', name: 'Folha de S.Paulo', url: 'https://feeds.folha.uol.com.br/emcimadahora/rss091.xml', site: 'https://www.folha.uol.com.br' }
-  ];
-
-  const grid = document.getElementById('news-grid');
-  grid.innerHTML = sources.map(s => `
-    <div class="news-card">
-      <div class="news-source-header">
-        <span class="news-source-name">${s.name}</span>
-        <a class="news-source-link" href="${s.site}" target="_blank">Ver site ↗</a>
-      </div>
-      <div id="${s.id}" style="padding:16px;color:var(--text3);font-size:13px;text-align:center">
-        <div class="spinner"></div><div style="margin-top:8px">Carregando...</div>
-      </div>
-    </div>`).join('');
-
-  for (const src of sources) {
-    try {
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}&count=5`;
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      const el = document.getElementById(src.id);
-      if (data.status === 'ok' && data.items?.length) {
-        el.innerHTML = data.items.map(item => `
-          <div class="news-item">
-            <a href="${item.link}" target="_blank">${item.title}</a>
-            <div class="news-item-date">${new Date(item.pubDate).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-          </div>`).join('');
-      } else {
-        el.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">Não foi possível carregar.<br><a href="${src.site}" target="_blank" style="color:var(--accent)">Abrir site ↗</a></div>`;
+[
+  {
+    "id": "notarial",
+    "icon": "📜",
+    "title": "Atos Notariais e Registrais",
+    "subtitle": "Lei 8.935/94 (LNR) · CF/88 art. 236",
+    "color": "0d3b2e,1a7a64",
+    "prio": "maxima",
+    "questoes": 60,
+    "topics": [
+      {
+        "id": "n1",
+        "text": "Conceito e natureza jurídica — microssistema autônomo (PASE)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n2",
+        "text": "Fontes: CF/88 art. 236, Lei 8.935/94, Lei 6.015/73, CC, CPC",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n3",
+        "text": "Ingresso: concurso de provas e títulos — 2/3 ingresso, 1/3 remoção",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n4",
+        "text": "Delegação e extinção (art. 39): morte, aposentadoria, renúncia, perda",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n5",
+        "text": "Prepostos: substitutos, escreventes (CLT). EXCEÇÃO: testamento ≠ substituto",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "n6",
+        "text": "Incompatibilidades (art. 25): advocacia, cargo público, mandato eletivo",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n7",
+        "text": "Impedimentos (art. 27): atos próprios, cônjuge, parentes até 3º grau colateral",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n8",
+        "text": "Emolumentos: taxa sui generis (RE 116.208). Tabela = lei estadual",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "n9",
+        "text": "Responsabilidade civil SUBJETIVA (dolo/culpa). Estado: OBJETIVA — STF Tema 777",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "n10",
+        "text": "Penas disciplinares: repreensão, multa, suspensão ≤ 90d, perda da delegação",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n11",
+        "text": "Competência: obrigatória, irrenunciável, imprescritível, imodificável",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n12",
+        "text": "Especialidades: Tabelionato Notas (livre escolha), RI (territoralidade), RCPN, RCPJ, RTD, Protesto",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n13",
+        "text": "Desjudicialização: inventário, divórcio, usucapião extrajudicial, adjudicação compulsória (L. 14.382/22)",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "n14",
+        "text": "CNJ: fiscalização, provimentos normativos, ENAC, PAD",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "n15",
+        "text": "Arquivos pertencem ao Estado — titular é mero depositário",
+        "done": false,
+        "hl": "gold"
       }
-    } catch {
-      const el = document.getElementById(src.id);
-      if (el) el.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">Erro ao carregar.<br><a href="https://g1.globo.com" target="_blank" style="color:var(--accent)">Abrir site ↗</a></div>`;
-    }
+    ]
+  },
+  {
+    "id": "tabelionato",
+    "icon": "🖋️",
+    "title": "Tabelionato de Notas",
+    "subtitle": "Princípios · Escrituras · Ato eletrônico · CNN/CNJ",
+    "color": "2b1a6e,6044c4",
+    "prio": "maxima",
+    "questoes": null,
+    "topics": [
+      {
+        "id": "t1",
+        "text": "Princípios: juridicidade, cautelaridade, imparcialidade, rogação, tecnicidade, unicidade",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t2",
+        "text": "Publicidade notarial (negativa) ≠ publicidade registral (positiva — erga omnes)",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "t3",
+        "text": "Sistemas: Latino ✔ Brasil (86 países); Anglo-saxão; Administrativo",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t4",
+        "text": "Atos protocolares (lavrados nos livros) × extraprotocolares (autenticações)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t5",
+        "text": "Escritura pública obrigatória: imóvel > 30 SM (art. 108 CC) — valor integral do imóvel",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "t6",
+        "text": "Exceções ao art. 108: SFH, alienação fiduciária, CCV, loteamentos populares",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t7",
+        "text": "Capacidade: absolutamente incapaz = representado; relativamente = assistido",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t8",
+        "text": "Emancipação volunt. (escritura + ambos os pais + registro RCPN)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t9",
+        "text": "Divórcio extrajudicial: consenso + advogado + sem filhos incapazes/gravidez",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "t10",
+        "text": "Conversão UE em casamento (art. 70-A LRP): extrajudicial, dispensa celebração",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t11",
+        "text": "Ato notarial eletrônico (CNN arts. 284-319): e-Notariado, ato híbrido",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "t12",
+        "text": "Alienação imóvel eletr. (art. 302): competente = tabeli­ão da circunscrição do imóvel ou domicílio do adquirente",
+        "done": false,
+        "hl": ""
+      }
+    ]
+  },
+  {
+    "id": "lrp",
+    "icon": "📚",
+    "title": "Lei 6.015/73 — Registros Públicos",
+    "subtitle": "LRP · L. 14.382/22 · SERP · Lei 15.042/24",
+    "color": "1a3a6e,3a6ec4",
+    "prio": "maxima",
+    "questoes": null,
+    "topics": [
+      {
+        "id": "l1",
+        "text": "Princípios: publicidade, continuidade, prioridade, legalidade, especialidade, concentração",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l2",
+        "text": "Quatro registros (art. 1º): RCPN, RCPJ, Títulos/Docs, Imóveis",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "l3",
+        "text": "RCPN: nascimento prazo 15d (3 meses se > 30km). Gratuidade absoluta: nascimento + 1ª certidão",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l4",
+        "text": "Livros RCPN: A (nasc.) · B (casam.) · B Aux · C (óbitos) · C Aux (natimortos) · D · E",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l5",
+        "text": "Nascimento: declarantes em ordem — pai/mãe > outro genitor > parente maior > médico > pessoa da casa",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l6",
+        "text": "Óbito: nenhum sepultamento sem certidão. Cremação exige 2 médicos (ou 1 legista) + vontade do de cujus",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l7",
+        "text": "L. 14.382/22: SERP, casamento por videoconferência, escrituração eletrônica obrigatória",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "l8",
+        "text": "RI — Registro obrigatório art. 167, I: hipoteca, servid­ão, C/V, aliena­ção fiduc., loteamentos, crédito de carbono (L. 15.042/24)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l9",
+        "text": "Matrícula: CNM (código único nacional, não reutilizável). Georreferenciamento INCRA para rural",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l10",
+        "text": "Prazos RI: 10 dias úteis (geral) / 5 dias (C/V simples, docs eletrônicos)",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "l11",
+        "text": "Dúvida (arts. 198-207): natureza administrativa. Interessado: 15 dias para impugnar",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l12",
+        "text": "Prenot­ação: caduca em 20 dias (omissão) / 40 dias (Reurb)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l13",
+        "text": "Retificação a requerimento: silêncio do confrontante em 15d = anuência presumida",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "l14",
+        "text": "Usucapião extrajudicial: ata notarial + planta/memorial + certidões + notificação confrontantes",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "l15",
+        "text": "Adjudicação compulsória extrajudicial (art. 216-B L. 14.382/22): notificação 15d + ata notarial",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "l16",
+        "text": "Fraude à execução (art. 185 CTN): desde a inscrição em dívida ativa — S. 375 STJ NÃO se aplica",
+        "done": false,
+        "hl": ""
+      }
+    ]
+  },
+  {
+    "id": "civil",
+    "icon": "⚖️",
+    "title": "Direito Civil",
+    "subtitle": "CC/2002 · LINDB · 14 questões (14%)",
+    "color": "1a4a7f,3a7ec4",
+    "prio": "alta",
+    "questoes": 14,
+    "topics": [
+      {
+        "id": "cv1",
+        "text": "LINDB: vigência (45d salvo disposição), conflito de leis no tempo, direito adquirido",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv2",
+        "text": "Pessoas naturais: personalidade inicia com nascimento com vida (art. 2º)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv3",
+        "text": "Incapacidade: absolutamente (< 16 anos); relativamente (16-18, ébrios, pródigos)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv4",
+        "text": "Desconsideração da PJ: teoria maior (art. 50 CC) × teoria menor (CDC/Ambiental)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv5",
+        "text": "Negócio jurídico: elementos essenciais, acidentais. Vícios: erro, dolo, coação, lesão, estado de perigo",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv6",
+        "text": "Prescrição × decadência: prescrição extingue pretensão; decadência extingue o direito",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "cv7",
+        "text": "Obrigações: dar, fazer, não fazer. Mora ex re × mora ex persona",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv8",
+        "text": "Formas especiais de pagamento: consignação, sub-rogação, novação, compensação, dação",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv9",
+        "text": "Contratos: formação, vícios do consentimento. Cláusula penal × arras",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv10",
+        "text": "Direitos reais: rol taxativo. Propriedade, usufruto, servidão, hipoteca",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv11",
+        "text": "Família: regimes de bens (comunhão parcial = padrão), dissolução, guarda, alimentos",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "cv12",
+        "text": "Sucessões: ordem de vocação (descendentes > ascendentes > cônjuge > colaterais), inventário",
+        "done": false,
+        "hl": ""
+      }
+    ]
+  },
+  {
+    "id": "constitucional",
+    "icon": "🏛️",
+    "title": "Direito Constitucional",
+    "subtitle": "CF/88 · STF · Novelino · 9 questões (9%)",
+    "color": "3a1a6e,7a44c4",
+    "prio": "alta",
+    "questoes": 9,
+    "topics": [
+      {
+        "id": "co1",
+        "text": "Constitucionalismo: clássico × neoconstitucionalismo. Supremacia da CF",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co2",
+        "text": "Poder Constituinte: originário (ilimitado), derivado (limitado), decorrente",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co3",
+        "text": "Normas constitucionais: eficácia plena, contida, limitada (José Afonso da Silva)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co4",
+        "text": "Controle difuso (incidental, inter partes) × concentrado (ADI, ADC, ADPF, ADO, interventiva)",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "co5",
+        "text": "Direitos fundamentais: dimensões (1ª liberdade; 2ª sociais; 3ª fraternidade). Proporcionalidade",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co6",
+        "text": "Direitos individuais: vida, igualdade, privacidade, liberdade, propriedade, dados pessoais (EC 115/22)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co7",
+        "text": "Garantias: HC, MS, HD, AP, MI. Remédios constitucionais",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co8",
+        "text": "Direitos sociais: reserva do possível × mínimo existencial × vedação de retrocesso",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co9",
+        "text": "Organização do Estado: federalismo, competências (CF arts. 21-25), intervenção",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co10",
+        "text": "Processo legislativo: leis ordinárias, complementares, MPs, emendas constitucionais",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co11",
+        "text": "Poder Judiciário: STF, STJ, CNJ. Súmula vinculante (efeito erga omnes)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "co12",
+        "text": "CNJ (art. 103-B CF): não exerce função jurisdicional, controle administrativo/financeiro/disciplinar",
+        "done": false,
+        "hl": "gold"
+      }
+    ]
+  },
+  {
+    "id": "tributario",
+    "icon": "💰",
+    "title": "Direito Tributário",
+    "subtitle": "CTN · CF/88 · 4 questões (4%)",
+    "color": "6e2b1a,c45030",
+    "prio": "media",
+    "questoes": 4,
+    "topics": [
+      {
+        "id": "tr1",
+        "text": "Princípios: legalidade, anterioridade (anual + nonagesimal), irretroatividade, isonomia, vedação ao confisco",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "tr2",
+        "text": "Imunidade recíproca (art. 150, VI, a) — NÃO se aplica a cartórios (ADI 3.089)",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "tr3",
+        "text": "Espécies: impostos, taxas, contribuição melhoria, empréstimos compulsórios, contribuições especiais",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "tr4",
+        "text": "Emolumentos = taxa sui generis (RE 116.208): não é receita do Estado",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "tr5",
+        "text": "Obrigação tributária: principal (dar) × acessória (fazer/não fazer). FG instantâneo, periódico, continuado",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "tr6",
+        "text": "Responsabilidade art. 134 CTN: tabeliões — subsidiária e por culpa (lembrar para cartórios)",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "tr7",
+        "text": "Crédito tributário: lançamento de ofício, declaração, homologação. Decadência × prescrição (5 anos)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "tr8",
+        "text": "Fraude à execução fiscal (art. 185 CTN): presunção absoluta desde inscrição em D.A.",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "tr9",
+        "text": "Inventário/partilha: exige prova de quitação de tributos (art. 192 CTN) — relevante para cartórios",
+        "done": false,
+        "hl": "gold"
+      }
+    ]
+  },
+  {
+    "id": "administrativo",
+    "icon": "🏢",
+    "title": "Direito Administrativo",
+    "subtitle": "Organização · Atos · Agentes · 4 questões (4%)",
+    "color": "6e5a1a,c4a030",
+    "prio": "media",
+    "questoes": 4,
+    "topics": [
+      {
+        "id": "ad1",
+        "text": "Adm. Direta (órgãos sem PJ) × Adm. Indireta (autarquias, fundações, EP, SEM)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "ad2",
+        "text": "Descentralização (transfere para outra PJ) × Desconcentração (distribui dentro da mesma PJ)",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "ad3",
+        "text": "Poderes: hierárquico, disciplinar, regulamentar, de polícia (atributos: discricionariedade, autoexecutoriedade, coercibilidade)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "ad4",
+        "text": "Atos administrativos: elementos (competência, finalidade, forma, motivo, objeto). Teoria dos motivos determinantes",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "ad5",
+        "text": "Revogação (conveniência, ex nunc) × Anulação (ilegalidade, ex tunc). Súm. 346 e 473 STF",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "ad6",
+        "text": "Agentes públicos: concurso público obrigatório (art. 37, II CF). Teto = subsídio Ministro STF",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "ad7",
+        "text": "Serviços públicos: continuidade, generalidade, modicidade, eficiência. Delegação: concessão, permissão, autorização",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "ad8",
+        "text": "Responsabilidade civil objetiva do Estado (art. 37, §6º CF). Ação regressiva: dolo/culpa do agente",
+        "done": false,
+        "hl": ""
+      }
+    ]
+  },
+  {
+    "id": "empresarial",
+    "icon": "📈",
+    "title": "Direito Empresarial",
+    "subtitle": "CC/2002 · Lei 11.101/05 · 4 questões (4%)",
+    "color": "1a6e3a,30c470",
+    "prio": "media",
+    "questoes": 4,
+    "topics": [
+      {
+        "id": "em1",
+        "text": "Empresário (art. 966 CC): profissionalismo + atividade econômica + organização. Atenção: profissional liberal ≠ empresário (salvo elemento de empresa)",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "em2",
+        "text": "Empresário rural e MEI: registros específicos no RCPJ × Junta Comercial",
+        "done": false,
+        "hl": "gold"
+      },
+      {
+        "id": "em3",
+        "text": "Estabelecimento empresarial: conjunto de bens organizados. Trespasse: successão de dívidas",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "em4",
+        "text": "Registro empresarial: Junta Comercial (RCPJ = pessoas simples/associações). Publicidade constitutiva",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "em5",
+        "text": "Sociedades: simples × empresária. Ltda., SA, EIRELI (extinta → UNIPESSOAL), SLU",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "em6",
+        "text": "Títulos de crédito: literalidade, autonomia, cartularidade. Cheque, nota promissória, duplicata",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "em7",
+        "text": "Falência e recuperação judicial (L. 11.101/05): ordem de preferência — trabalhistas > garantia real > tributos > multas",
+        "done": false,
+        "hl": ""
+      }
+    ]
+  },
+  {
+    "id": "processual",
+    "icon": "⚔️",
+    "title": "Direito Processual Civil",
+    "subtitle": "CPC/2015 · 2 questões (2%)",
+    "color": "2a2a6e,5050c4",
+    "prio": "baixa",
+    "questoes": 2,
+    "topics": [
+      {
+        "id": "pc1",
+        "text": "Inventário extrajudicial (art. 610 CPC): consenso + sem herdeiros incapazes + advogado",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "pc2",
+        "text": "Divórcio/separação extrajudicial (art. 733 CPC): mesmo requisitos + qualquer Tabelionato",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "pc3",
+        "text": "Usucapião (art. 1.071 CPC): desjudicialização — rito no Registro de Imóveis",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "pc4",
+        "text": "Cumprimento de sentença, execução, penhora, hasta pública: conceitos básicos",
+        "done": false,
+        "hl": ""
+      }
+    ]
+  },
+  {
+    "id": "penal",
+    "icon": "🔒",
+    "title": "Direito Penal",
+    "subtitle": "CP · CPP · 1 questão cada (2% total)",
+    "color": "3a1a1a,a03030",
+    "prio": "baixa",
+    "questoes": 2,
+    "topics": [
+      {
+        "id": "pe1",
+        "text": "Teoria geral do crime: fato típico, antijurídico, culpável. Dolo × culpa",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "pe2",
+        "text": "Crimes contra a fé pública: falsidade documental, ideológica. Relevância para cartórios",
+        "done": false,
+        "hl": "red"
+      },
+      {
+        "id": "pe3",
+        "text": "Crimes contra a Adm. Pública: peculato, concussão, corrupção passiva — analogia para delegatários",
+        "done": false,
+        "hl": ""
+      },
+      {
+        "id": "pe4",
+        "text": "CPP: inquérito policial, ação penal pública × privada. Habeas corpus",
+        "done": false,
+        "hl": ""
+      }
+    ]
   }
-}
-
-// ============================================================
-// EXPORT / IMPORT
-// ============================================================
-function exportData() {
-  const data = JSON.stringify({ contacts: db.contacts, events: db.events, settings: db.settings, exportedAt: new Date().toISOString() }, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'agenda-backup.json'; a.click();
-  URL.revokeObjectURL(url);
-  showToast('Backup exportado!', 'success');
-}
-
-function importData(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (data.contacts) db.contacts = data.contacts;
-      if (data.events) db.events = data.events;
-      if (data.settings) db.settings = { ...db.settings, ...data.settings };
-      await Promise.all([
-        saveToCloud(STORAGE_KEYS.contacts, db.contacts),
-        saveToCloud(STORAGE_KEYS.events, db.events),
-        saveToCloud(STORAGE_KEYS.settings, db.settings)
-      ]);
-      renderContacts();
-      renderCalendar();
-      renderEventsList();
-      updateBadges();
-      renderDashboard();
-      updateProfileName();
-      showToast('Dados importados com sucesso!', 'success');
-    } catch {
-      showToast('Erro ao importar arquivo', 'error');
-    }
-  };
-  reader.readAsText(file);
-  input.value = '';
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-function updateBadges() {
-  document.getElementById('badge-contacts').textContent = db.contacts.length;
-  document.getElementById('badge-events').textContent = db.events.length;
-}
-
-function getTodayStr() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-}
-
-function formatDate(ds) {
-  if (!ds) return '';
-  const [y,m,d] = ds.split('-');
-  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  return `${d} ${months[parseInt(m)-1]} ${y}`;
-}
-
-function catLabel(cat) {
-  return {work:'Trabalho',personal:'Pessoal',health:'Saúde',family:'Família',other:'Outro'}[cat]||'Outro';
-}
-
-function showToast(msg, type='') {
-  const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-
-// ============================================================
-// STARTUP — Carrega PIN da nuvem antes de mostrar a tela de lock
-// ============================================================
-(async () => {
-  setSyncStatus('syncing', 'Conectando...');
-  try {
-    const settingsResult = await safeGet(STORAGE_KEYS.settings);
-    if (settingsResult) {
-      const s = JSON.parse(settingsResult);
-      db.settings = { ...db.settings, ...s };
-    }
-    setSyncStatus('synced', 'Conectado');
-  } catch {
-    setSyncStatus('error', 'Modo offline');
-  }
-})();
-</script>
-</body>
-</html>
+]
